@@ -7,5 +7,7 @@ Hylé does not have a native execution environment, smart contracts do not execu
 
 See the [documentation](https://docs.hyle.eu/developers/using-the-cli/your-first-smart-contract/) to learn more.
 
+[Check the example of a program to verify the Collatz Conjecture](https://github.com/Hyle-org/collatz-conjecture/). 
+
 > ⚠️ The examples have not been audited and are not intended for production use.
 > The authors are not responsible for any damages caused by the use of the code provided here.
