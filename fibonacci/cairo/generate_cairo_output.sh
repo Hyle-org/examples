@@ -1,0 +1,1 @@
+./../../../vibe-check/cairo-runner/target/debug/cairo-runner src/lib.cairo fibonacci.args target/trace.bin target/memory.bin target/output.json target/dev/fibonacci.sierra.json  
