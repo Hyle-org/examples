@@ -9,5 +9,7 @@ See the [documentation](https://docs.hyle.eu/developers/using-the-cli/your-first
 
 [Check the example of a program to verify the Collatz Conjecture](https://github.com/Hyle-org/collatz-conjecture/). 
 
+[Example of ERC20 program in Cairo](https://github.com/Hyle-org/vibe-check/tree/main/cairo-smile-token)
+
 > ⚠️ The examples have not been audited and are not intended for production use.
 > The authors are not responsible for any damages caused by the use of the code provided here.
