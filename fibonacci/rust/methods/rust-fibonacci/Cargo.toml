@@ -1,0 +1,11 @@
+[package]
+name = "method"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+hyle_contract = { git = "https://github.com/Hyle-org/hyle.git", branch = "main" }
+#hyle_contract = { path = "../../../verifiers-for-hyle/hyle-contract" }
+risc0-zkvm = { version = "0.21.0", default-features = false }
