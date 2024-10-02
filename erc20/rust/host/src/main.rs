@@ -1,32 +1,44 @@
 use methods::METHOD_ELF;
 
-use utils::ERC20Input;
+use utils::{Balances, ContractFunction, TokenContractInput};
 
-use base64::prelude::*;
 use clap::{Parser, Subcommand};
 use hyle_contract::HyleOutput;
 use risc0_zkvm::{default_prover, sha::Digestible, ExecutorEnv};
 use serde_json;
+
+#[derive(Subcommand)]
+pub enum ContractFunctionCommand {
+    Transfer {
+        from: String,
+        to: String,
+        amount: u64,
+    },
+    Mint {
+        to: String,
+        amount: u64,
+    },
+}
+impl From<ContractFunctionCommand> for ContractFunction {
+    fn from(cmd: ContractFunctionCommand) -> Self {
+        match cmd {
+            ContractFunctionCommand::Transfer { from, to, amount } => {
+                ContractFunction::Transfer { from, to, amount }
+            }
+            ContractFunctionCommand::Mint { to, amount } => ContractFunction::Mint { to, amount },
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: ContractFunctionCommand,
 
     #[clap(long, short)]
     reproducible: bool,
-}
-
-#[derive(Subcommand)]
-enum Commands {
-    Transfer {
-        from: String,
-        to: String,
-        amount: u64,
-    },
-    Reset,
 }
 
 fn main() {
@@ -38,41 +50,44 @@ fn main() {
         println!("Running non-reproducibly");
     }
 
-    let receipt = match &cli.command {
-        Commands::Transfer { from, to, amount } => prove(cli.reproducible, from, to, *amount),
-        Commands::Reset => prove(cli.reproducible, &"".to_string(), &"".to_string(), 0),
-    };
+    let prove_info = prove(cli.reproducible, cli.command.into());
 
-    let claim = receipt.inner.get_claim().unwrap();
+    let receipt = prove_info.receipt;
+    let claim = receipt.claim().unwrap().value().unwrap();
 
     let receipt_json = serde_json::to_string(&receipt).unwrap();
     std::fs::write("proof.json", receipt_json).unwrap();
 
-    let hyle_output = receipt.journal.decode::<HyleOutput<String>>().unwrap();
-
-    let initial_state_b64 = BASE64_STANDARD.encode(&hyle_output.initial_state);
-    let next_state_b64 = BASE64_STANDARD.encode(&hyle_output.next_state);
-    let initial_state_u32 = u32::from_be_bytes(hyle_output.initial_state.try_into().unwrap());
-    let next_state_u32 = u32::from_be_bytes(hyle_output.next_state.try_into().unwrap());
-    let program_outputs = hyle_output.program_outputs;
+    let hyle_output = receipt
+        .journal
+        .decode::<HyleOutput<String>>()
+        .expect("Failed to decode journal");
 
     println!("{}", "-".repeat(20));
-    println!("Method ID: {:?} (hex)", claim.pre.digest());
+    println!("Method ID: {:?} (hex)", claim.digest());
     println!(
-        "proof.json written, transition from {} ({}) to {} ({})",
-        initial_state_b64, initial_state_u32, next_state_b64, next_state_u32
+        "proof.json written, transition from {:?} to {:?}",
+        hex::encode(&hyle_output.initial_state),
+        hex::encode(&hyle_output.next_state)
     );
-    println!("Program outputted {:?}", program_outputs);
+    println!("{:?}", hyle_output);
 }
 
-fn prove(reproducible: bool, from: &String, to: &String, amount: u64) -> risc0_zkvm::Receipt {
+fn prove(reproducible: bool, program_inputs: ContractFunction) -> risc0_zkvm::ProveInfo {
+    // TODO: Allow user to add custom balance
+    let balances = Balances::default();
+    // TODO: Allow user to add real tx_hash
+    let tx_hash = vec![1];
+    // TODO: Allow user to add multiple values in payload
+    let payloads = vec![program_inputs.encode()];
+    let index = 0;
+
     let env = ExecutorEnv::builder()
-        .write(&ERC20Input {
-            initial_state: 1u32.to_be_bytes().to_vec(),
-            sender: from.clone(),
-            receiver: to.clone(),
-            tx_hash: vec![1],
-            program_inputs: amount,
+        .write(&TokenContractInput {
+            balances,
+            tx_hash,
+            payloads,
+            index,
         })
         .unwrap()
         .build()

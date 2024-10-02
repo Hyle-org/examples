@@ -22,28 +22,28 @@ To generate a proof of an ERC20 token transfer from one account to another, run:
 - With reproducible ELF binary:
 
    ```sh
-   cargo run -- -r transfer alice bob 100
+   cargo run -- -r mint bob 100
    ```
 
 - Non-reproducibly:
 
    ```sh
-   cargo run transfer alice bob 100
+   cargo run transfer bob alice 100
    ```
 
 
 This will output:
 
 ```sh
-Method ID: Digest(e200c46f3df94f8b8fa556e67dc484e9d3b15379c2d51d1973dbc821e7564c34) (hex)
-proof.json written, transition from AAAAAQ== (1) to AAAAAg== (2)
-Program outputted "Transferred 100 from alice to bob. Sender new balance: 900, Receiver new balance: 600"
+Method ID: Digest(2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31) (hex)
+proof.json written, transition from "ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d" to "f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38"
+HyleOutput { version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, payloads: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
 ```
 
 Key information includes:
-- **Method ID**: `e200c46f3df94f8b8fa556e67dc484e9d3b15379c2d51d1973dbc821e7564c34`, which will be used later to register the contract on Hylé.
-- **Initial State Transition**: `AAAAAQ== (1)`, which will be set when registering the contract on Hylé.
-- **Next State Transition**: `AAAAAg== (2)`, which will be visible on Hylé once the proof is validated.
+- **Method ID**: `2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31`, which will be used later to register the contract on Hylé.
+- **Initial State Transition**: `ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d`, which will be set when registering the contract on Hylé.
+- **Next State Transition**: `f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38`, which will be visible on Hylé once the proof is validated.
 
 ### Proof Verification - Locally
 
@@ -52,24 +52,24 @@ Install the [Hylé RISC Zero verifier](https://github.com/Hyle-org/verifiers-for
 You can then verify proofs in **risc0-verifier/**, run:
 
 ```sh
-cargo run -p risc0-verifier e200c46f3df94f8b8fa556e67dc484e9d3b15379c2d51d1973dbc821e7564c34 ../../../examples/erc20/rust/proof.json
+cargo run -p risc0-verifier 2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31 ../../../examples/erc20/rust/proof.json
 ```
 
 Expected result should look similar to:
 
 ```sh
-{"version":1,"initial_state":[0,0,0,1],"next_state":[0,0,0,2],"identity":"alice","tx_hash":[1],"program_outputs":null}
+{ version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, payloads: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
 ```
 
 ### Register Contract on Hylé
 
 - RISC Zero smart contracts are identified by their image ID. Two identical programs will have identical image IDs.
-- State digest is our initial value: `AAAAAQ== (1)`.
+- State digest is our initial value: `ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d`.
 
 Run:
 
 ```sh
-./hyled tx zktx register default risczero e200c46f3df94f8b8fa556e67dc484e9d3b15379c2d51d1973dbc821e7564c34 erc20_rust AAAAAQ==
+./hyled tx zktx register default risczero 2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31 erc20_rust ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d
 ```
 
 The contract will be deployed with the state_digest value = 1 (AAAAAQ==).
@@ -80,7 +80,7 @@ The contract will be deployed with the state_digest value = 1 (AAAAAQ==).
 Run:
 
 ```sh
-./hyled tx zktx publish "" erc20_rust AAAAAg==
+./hyled tx zktx publish "bob" erc20_rust <payload>
 ```
 
 

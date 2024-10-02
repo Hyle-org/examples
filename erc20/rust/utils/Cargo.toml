@@ -4,5 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-serde = { version = "1.0", default-features = false, features = ["derive", "alloc"] }
-
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
+anyhow = "1.0.89"
+sha3 = "0.10.8"
+bincode = "1.3"
