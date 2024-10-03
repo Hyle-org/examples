@@ -3,6 +3,7 @@ use methods::METHOD_ELF;
 use utils::{Balances, ContractFunction, TokenContractInput};
 
 use borsh::to_vec;
+
 use clap::{Parser, Subcommand};
 use hyle_contract::HyleOutput;
 use risc0_zkvm::{default_prover, sha::Digestible, ExecutorEnv};
@@ -64,13 +65,17 @@ fn main() {
         .expect("Failed to decode journal");
 
     println!("{}", "-".repeat(20));
-    println!("Method ID: {:?} (hex)", claim.digest());
+    println!("Method ID: {:?} (hex)", claim.pre.digest());
     println!(
         "erc20.risc0.proof written, transition from {:?} to {:?}",
         hex::encode(&hyle_output.initial_state),
         hex::encode(&hyle_output.next_state)
     );
     println!("{:?}", hyle_output);
+
+    receipt
+        .verify(claim.pre.digest())
+        .expect("Verification 2 failed");
 }
 
 fn prove(reproducible: bool, program_inputs: ContractFunction) -> risc0_zkvm::ProveInfo {
