@@ -35,13 +35,13 @@ To generate a proof of an ERC20 token transfer from one account to another, run:
 This will output:
 
 ```sh
-Method ID: Digest(a77b03e5db5b05ce9e05920e528a18985d40aecda607cbb808235c87f535f606) (hex)
+Method ID: Digest(303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512) (hex)
 erc20.risc0.proof written, transition from "ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d" to "f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38"
-HyleOutput { version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, payloads: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
+HyleOutput { version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, blobs: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
 ```
 
 Key information includes:
-- **Method ID**: `a77b03e5db5b05ce9e05920e528a18985d40aecda607cbb808235c87f535f606`, which will be used later to register the contract on Hylé.
+- **Method ID**: `303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512`, which will be used later to register the contract on Hylé.
 - **Initial State Transition**: `ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d`, which will be set when registering the contract on Hylé.
 - **Next State Transition**: `f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38`, which will be visible on Hylé once the proof is validated.
 
@@ -52,13 +52,13 @@ Install the [Hylé RISC Zero verifier](https://github.com/Hyle-org/verifiers-for
 You can then verify proofs in **risc0-verifier/**, run:
 
 ```sh
-cargo run -p risc0-verifier a77b03e5db5b05ce9e05920e528a18985d40aecda607cbb808235c87f535f606 ../../../examples/erc20/rust/erc20.risc0.proof
+cargo run -p risc0-verifier 303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512 ../../../examples/erc20/rust/erc20.risc0.proof
 ```
 
 Expected result should look similar to:
 
 ```sh
-{ version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, payloads: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
+{ version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, blobs: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
 ```
 
 ### Register Contract on Hylé
@@ -69,7 +69,7 @@ Expected result should look similar to:
 Run:
 
 ```sh
-./hyled tx zktx register default risczero a77b03e5db5b05ce9e05920e528a18985d40aecda607cbb808235c87f535f606 erc20_rust ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d
+./hyled tx zktx register default risczero 303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512 erc20_rust ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d
 ```
 
 The contract will be deployed with the state_digest value = 1 (AAAAAQ==).

@@ -5,9 +5,8 @@ extern crate alloc;
 
 use alloc::format;
 use alloc::string::ToString;
-use hyle_contract::HyleOutput;
 use risc0_zkvm::guest::env;
-use utils::{ContractFunction, TokenContractInput};
+use utils::{ContractFunction, HyleOutput, TokenContractInput};
 
 risc0_zkvm::guest::entry!(main);
 
@@ -16,11 +15,11 @@ fn main() {
 
     let initial_state = input.balances.hash();
 
-    let payload = match input.payloads.get(input.index) {
+    let payload = match input.blobs.get(input.index) {
         Some(v) => v,
         None => {
             env::log("Unable to find the payload");
-            let flattened_payloads = input.payloads.into_iter().flatten().collect();
+            let flattened_blobs = input.blobs.into_iter().flatten().collect();
             env::commit(&HyleOutput {
                 version: 1,
                 initial_state: initial_state.clone(),
@@ -28,9 +27,9 @@ fn main() {
                 identity: "".to_string(),
                 tx_hash: input.tx_hash.clone(),
                 index: input.index as u32,
-                payloads: flattened_payloads,
+                blobs: flattened_blobs,
                 success: false,
-                program_outputs: "Payload not found".to_string(),
+                program_outputs: "Payload not found".to_string().into_bytes(),
             });
             return;
         }
@@ -47,7 +46,9 @@ fn main() {
                     false
                 }
             };
-            let program_outputs = format!("Transferred {} from {} to {}", amount, from, to);
+            let program_outputs = format!("Transferred {} from {} to {}", amount, from, to)
+                .to_string()
+                .into_bytes();
 
             (success, from, program_outputs)
         }
@@ -59,7 +60,9 @@ fn main() {
                     false
                 }
             };
-            let program_outputs = format!("Minted {} to {}", amount, to);
+            let program_outputs = format!("Minted {} to {}", amount, to)
+                .to_string()
+                .into_bytes();
 
             (success, to, program_outputs)
         }
@@ -67,7 +70,7 @@ fn main() {
     env::log(&format!("New balances: {:?}", input.balances));
     let next_state = input.balances.hash();
 
-    let flattened_payloads = input.payloads.into_iter().flatten().collect();
+    let flattened_blobs = input.blobs.into_iter().flatten().collect();
     env::commit(&HyleOutput {
         version: 1,
         initial_state,
@@ -75,7 +78,7 @@ fn main() {
         identity,
         tx_hash: input.tx_hash,
         index: input.index as u32,
-        payloads: flattened_payloads,
+        blobs: flattened_blobs,
         success,
         program_outputs,
     })

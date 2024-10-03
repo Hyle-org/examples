@@ -10,6 +10,20 @@ use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
+// FIXME: This is meant to be imported from hyle repo
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+pub struct HyleOutput {
+    pub version: u32,
+    pub initial_state: Vec<u8>,
+    pub next_state: Vec<u8>,
+    pub identity: String,
+    pub tx_hash: Vec<u8>,
+    pub index: u32,
+    pub blobs: Vec<u8>,
+    pub success: bool,
+    pub program_outputs: Vec<u8>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
 pub struct Account {
     name: String,
@@ -117,7 +131,7 @@ impl Balances {
 pub struct TokenContractInput {
     pub balances: Balances,
     pub tx_hash: Vec<u8>,
-    pub payloads: Vec<Vec<u8>>,
+    pub blobs: Vec<Vec<u8>>,
     pub index: usize,
 }
 

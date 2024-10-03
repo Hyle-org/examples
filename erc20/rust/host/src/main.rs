@@ -1,11 +1,10 @@
 use methods::METHOD_ELF;
 
-use utils::{Balances, ContractFunction, TokenContractInput};
+use utils::{Balances, ContractFunction, HyleOutput, TokenContractInput};
 
 use borsh::to_vec;
 
 use clap::{Parser, Subcommand};
-use hyle_contract::HyleOutput;
 use risc0_zkvm::{default_prover, sha::Digestible, ExecutorEnv};
 
 #[derive(Subcommand)]
@@ -59,9 +58,10 @@ fn main() {
 
     let claim = receipt.claim().unwrap().value().unwrap();
 
+    println!("receipt.journal :{:?}", receipt.journal);
     let hyle_output = receipt
         .journal
-        .decode::<HyleOutput<String>>()
+        .decode::<HyleOutput>()
         .expect("Failed to decode journal");
 
     println!("{}", "-".repeat(20));
@@ -84,14 +84,14 @@ fn prove(reproducible: bool, program_inputs: ContractFunction) -> risc0_zkvm::Pr
     // TODO: Allow user to add real tx_hash
     let tx_hash = vec![1];
     // TODO: Allow user to add multiple values in payload
-    let payloads = vec![program_inputs.encode()];
+    let blobs = vec![program_inputs.encode()];
     let index = 0;
 
     let env = ExecutorEnv::builder()
         .write(&TokenContractInput {
             balances,
             tx_hash,
-            payloads,
+            blobs,
             index,
         })
         .unwrap()
