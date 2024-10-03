@@ -2,10 +2,10 @@ use methods::METHOD_ELF;
 
 use utils::{Balances, ContractFunction, TokenContractInput};
 
+use borsh::to_vec;
 use clap::{Parser, Subcommand};
 use hyle_contract::HyleOutput;
 use risc0_zkvm::{default_prover, sha::Digestible, ExecutorEnv};
-use serde_json;
 
 #[derive(Subcommand)]
 pub enum ContractFunctionCommand {
@@ -53,10 +53,10 @@ fn main() {
     let prove_info = prove(cli.reproducible, cli.command.into());
 
     let receipt = prove_info.receipt;
-    let claim = receipt.claim().unwrap().value().unwrap();
+    let encoded_receipt = to_vec(&receipt).expect("Unable to encode receipt");
+    std::fs::write("erc20.risc0.proof", encoded_receipt).unwrap();
 
-    let receipt_json = serde_json::to_string(&receipt).unwrap();
-    std::fs::write("proof.json", receipt_json).unwrap();
+    let claim = receipt.claim().unwrap().value().unwrap();
 
     let hyle_output = receipt
         .journal
@@ -66,7 +66,7 @@ fn main() {
     println!("{}", "-".repeat(20));
     println!("Method ID: {:?} (hex)", claim.digest());
     println!(
-        "proof.json written, transition from {:?} to {:?}",
+        "erc20.risc0.proof written, transition from {:?} to {:?}",
         hex::encode(&hyle_output.initial_state),
         hex::encode(&hyle_output.next_state)
     );

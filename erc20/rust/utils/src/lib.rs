@@ -1,10 +1,12 @@
 #![no_std]
 
 extern crate alloc;
+
 use alloc::borrow::ToOwned;
 use alloc::vec::Vec;
 use alloc::{string::String, vec};
 use anyhow::{bail, Error};
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
@@ -119,7 +121,7 @@ pub struct TokenContractInput {
     pub index: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Encode, Decode, Debug)]
 pub enum ContractFunction {
     Transfer {
         from: String,
@@ -133,10 +135,13 @@ pub enum ContractFunction {
 }
 impl ContractFunction {
     pub fn encode(&self) -> Vec<u8> {
-        bincode::serialize(self).expect("Failed to serialize ContractFunction")
+        bincode::encode_to_vec(self, bincode::config::standard())
+            .expect("Failed to encode ContractFunction")
     }
 
     pub fn decode(data: &[u8]) -> Self {
-        bincode::deserialize(data).expect("Failed to deserialize ContractFunction")
+        let (v, _) = bincode::decode_from_slice(data, bincode::config::standard())
+            .expect("Failed to decode ContractFunction");
+        v
     }
 }

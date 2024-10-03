@@ -36,7 +36,7 @@ This will output:
 
 ```sh
 Method ID: Digest(2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31) (hex)
-proof.json written, transition from "ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d" to "f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38"
+erc20.risc0.proof written, transition from "ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d" to "f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38"
 HyleOutput { version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, payloads: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
 ```
 
@@ -52,7 +52,7 @@ Install the [Hylé RISC Zero verifier](https://github.com/Hyle-org/verifiers-for
 You can then verify proofs in **risc0-verifier/**, run:
 
 ```sh
-cargo run -p risc0-verifier 2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31 ../../../examples/erc20/rust/proof.json
+cargo run -p risc0-verifier 2a7db06061796667484e04092ae6db09afab019a0c4e25dc8c868498e6c08b31 ../../../examples/erc20/rust/erc20.risc0.proof
 ```
 
 Expected result should look similar to:
@@ -94,7 +94,7 @@ Example: `DB38EC67872788B3B325ED52D3E487BBD1BFCBE98B2EDD63918DBB080E7BDDD0`.
 Run by replacing `[transaction_hash]` with the one used to settle the payload: `DB38EC67872788B3B325ED52D3E487BBD1BFCBE98B2EDD63918DBB080E7BDDD0`.
 
 ```sh
-./hyled tx zktx prove [transaction_hash] 0 erc20_rust ../examples/erc20/rust/proof.json
+./hyled tx zktx prove [transaction_hash] 0 erc20_rust ../examples/erc20/rust/erc20.risc0.proof
 ```
 
 
