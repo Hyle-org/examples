@@ -2,66 +2,84 @@
 #![no_std]
 
 extern crate alloc;
+
 use alloc::format;
-use alloc::string::String;
-
+use alloc::string::ToString;
 use risc0_zkvm::guest::env;
-use hyle_contract::HyleOutput;
-
+use utils::{ContractFunction, HyleOutput, TokenContractInput};
 
 risc0_zkvm::guest::entry!(main);
 
-#[derive(Debug, Clone)]
-struct Account {
-    name: String,
-    balance: u64,
-}
+fn main() {
+    let mut input: TokenContractInput = env::read();
 
+    let initial_state = input.balances.hash();
 
-use utils::ERC20Input;
-
-impl Account {
-    fn new(name: String, balance: u64) -> Self {
-        Account { name, balance }
-    }
-
-    fn transfer(&mut self, amount: u64) -> bool {
-        if self.balance >= amount {
-            self.balance -= amount;
-            true
-        } else {
-            false
+    let payload = match input.blobs.get(input.index) {
+        Some(v) => v,
+        None => {
+            env::log("Unable to find the payload");
+            let flattened_blobs = input.blobs.into_iter().flatten().collect();
+            env::commit(&HyleOutput {
+                version: 1,
+                initial_state: initial_state.clone(),
+                next_state: initial_state,
+                identity: "".to_string(),
+                tx_hash: input.tx_hash.clone(),
+                index: input.index as u32,
+                blobs: flattened_blobs,
+                success: false,
+                program_outputs: "Payload not found".to_string().into_bytes(),
+            });
+            return;
         }
-    }
-
-    fn receive(&mut self, amount: u64) {
-        self.balance += amount;
-    }
-}
-
-pub fn main() {
-    let input: ERC20Input<u64> = env::read();
-
-    let mut sender = Account::new(input.sender.clone(), 1000); // Initial balances for the example
-    let mut receiver = Account::new(input.receiver.clone(), 500); 
-
-    let success = if sender.transfer(input.program_inputs) {
-        receiver.receive(input.program_inputs);
-        true
-    } else {
-        false
     };
 
-    let initial_state = u32::from_be_bytes(input.initial_state.clone().try_into().unwrap());
+    let contract_function = ContractFunction::decode(payload);
+
+    let (success, identity, program_outputs) = match contract_function {
+        ContractFunction::Transfer { from, to, amount } => {
+            let success = match input.balances.send(&from, &to, amount) {
+                Ok(()) => true,
+                Err(e) => {
+                    env::log(&format!("Failed to Transfer: {:?}", e));
+                    false
+                }
+            };
+            let program_outputs = format!("Transferred {} from {} to {}", amount, from, to)
+                .to_string()
+                .into_bytes();
+
+            (success, from, program_outputs)
+        }
+        ContractFunction::Mint { to, amount } => {
+            let success = match input.balances.mint(&to, amount) {
+                Ok(()) => true,
+                Err(e) => {
+                    env::log(&format!("Failed to Mint: {:?}", e));
+                    false
+                }
+            };
+            let program_outputs = format!("Minted {} to {}", amount, to)
+                .to_string()
+                .into_bytes();
+
+            (success, to, program_outputs)
+        }
+    };
+    env::log(&format!("New balances: {:?}", input.balances));
+    let next_state = input.balances.hash();
+
+    let flattened_blobs = input.blobs.into_iter().flatten().collect();
     env::commit(&HyleOutput {
         version: 1,
-        identity: input.sender,
+        initial_state,
+        next_state,
+        identity,
         tx_hash: input.tx_hash,
-        program_outputs: format!(
-            "Transferred {} from {} to {}. Sender new balance: {}, Receiver new balance: {}",
-            input.program_inputs, sender.name, receiver.name, sender.balance, receiver.balance
-        ),
-        initial_state: input.initial_state,
-        next_state: u32::to_be_bytes(if success { initial_state + 1 } else { initial_state }).to_vec(),
+        index: input.index as u32,
+        blobs: flattened_blobs,
+        success,
+        program_outputs,
     })
 }
