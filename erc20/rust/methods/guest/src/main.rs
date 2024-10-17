@@ -22,11 +22,11 @@ fn main() {
             let flattened_blobs = input.blobs.into_iter().flatten().collect();
             env::commit(&HyleOutput {
                 version: 1,
-                initial_state: initial_state.clone(),
-                next_state: initial_state,
-                identity: "".to_string(),
-                tx_hash: input.tx_hash.clone(),
-                index: input.index as u32,
+                initial_state: utils::StateDigest(initial_state.clone()),
+                next_state: utils::StateDigest(initial_state),
+                identity: utils::Identity("".to_string()),
+                tx_hash: utils::TxHash(input.tx_hash.clone()),
+                index: utils::BlobIndex(input.index as u32),
                 blobs: flattened_blobs,
                 success: false,
                 program_outputs: "Payload not found".to_string().into_bytes(),
@@ -73,11 +73,11 @@ fn main() {
     let flattened_blobs = input.blobs.into_iter().flatten().collect();
     env::commit(&HyleOutput {
         version: 1,
-        initial_state,
-        next_state,
-        identity,
-        tx_hash: input.tx_hash,
-        index: input.index as u32,
+        initial_state: utils::StateDigest(initial_state),
+        next_state: utils::StateDigest(next_state),
+        identity: utils::Identity(identity),
+        tx_hash: utils::TxHash(input.tx_hash),
+        index: utils::BlobIndex(input.index as u32),
         blobs: flattened_blobs,
         success,
         program_outputs,

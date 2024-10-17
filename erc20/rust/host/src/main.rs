@@ -50,7 +50,11 @@ fn main() {
         println!("Running non-reproducibly");
     }
 
-    let prove_info = prove(cli.reproducible, cli.command.into());
+    let program_inputs: ContractFunction = cli.command.into();
+    let hex_program_inputs = hex::encode(program_inputs.encode());
+    println!("program_inputs: {:?}", program_inputs);
+    println!("program_inputs (hex): {:?}", hex_program_inputs);
+    let prove_info = prove(cli.reproducible, program_inputs);
 
     let receipt = prove_info.receipt;
     let encoded_receipt = to_vec(&receipt).expect("Unable to encode receipt");
@@ -65,13 +69,26 @@ fn main() {
         .expect("Failed to decode journal");
 
     println!("{}", "-".repeat(20));
-    println!("Method ID: {:?} (hex)", claim.pre.digest());
+    let method_id = claim.pre.digest();
+    let initial_state = hex::encode(&hyle_output.initial_state.0);
+    println!("Method ID: {:?} (hex)", method_id);
     println!(
         "erc20.risc0.proof written, transition from {:?} to {:?}",
-        hex::encode(&hyle_output.initial_state),
-        hex::encode(&hyle_output.next_state)
+        initial_state,
+        hex::encode(&hyle_output.next_state.0)
     );
     println!("{:?}", hyle_output);
+
+    println!("{}", "-".repeat(20));
+    println!("You can register the contract by running:");
+    println!(
+        "hyled contract default risc0 {} erc20_rust {}",
+        method_id, initial_state
+    );
+    println!("You can send the blob tx:");
+    println!("hyled blob IDENTITY erc20_rust {}", hex_program_inputs);
+    println!("You can send the proof tx:");
+    println!("hyled proof BLOB_TX_HASH 0 erc20_rust erc20.risc0.proof");
 
     receipt
         .verify(claim.pre.digest())
