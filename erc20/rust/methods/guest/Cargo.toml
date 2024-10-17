@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 risc0-zkvm = { version = "1.1.1", default-features = false, features = ['std'] }
 utils = { path = "../../utils" }
+sdk = { git = "https://github.com/Hyle-org/hyle.git", package = "sdk", branch = "sdk" }

@@ -10,32 +10,6 @@ use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct StateDigest(pub Vec<u8>);
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct Identity(pub String);
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct TxHash(pub Vec<u8>);
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct BlobIndex(pub u32);
-
-// FIXME: This is meant to be imported from hyle repo
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct HyleOutput {
-    pub version: u32,
-    pub initial_state: StateDigest,
-    pub next_state: StateDigest,
-    pub identity: Identity,
-    pub tx_hash: TxHash,
-    pub index: BlobIndex,
-    pub blobs: Vec<u8>,
-    pub success: bool,
-    pub program_outputs: Vec<u8>,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, Hash)]
 pub struct Account {
     name: String,

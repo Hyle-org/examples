@@ -1,6 +1,7 @@
 use methods::METHOD_ELF;
 
-use utils::{Balances, ContractFunction, HyleOutput, TokenContractInput};
+use sdk::HyleOutput;
+use utils::{Balances, ContractFunction, TokenContractInput};
 
 use borsh::to_vec;
 
