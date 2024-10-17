@@ -22,57 +22,51 @@ To generate a proof of an ERC20 token transfer from one account to another, run:
 - With reproducible ELF binary:
 
    ```sh
+   # To start from a fresh new inital state use -i argument
+   cargo run -- -r -i mint bob 100
+   # Or to fetch current onchain state of contract :
    cargo run -- -r mint bob 100
    ```
 
 - Non-reproducibly:
 
    ```sh
-   cargo run transfer bob alice 100
+   cargo run transfer alice bob 100
+
    ```
 
-
-This will output:
+This will hyled commands you can use to send your transaction on hyle:
 
 ```sh
-Method ID: Digest(303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512) (hex)
-erc20.risc0.proof written, transition from "ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d" to "f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38"
-HyleOutput { version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, blobs: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
+You can register the contract by running:
+hyled contract default risc0 9bbfa2ef3131b9aab7db20ce72349ef3edf536d08d7932fa6dd1bf8f25d08d7a erc20_rust 0106666175636574fc40420f00
+You can send the blob tx:
+hyled blob IDENTITY erc20_rust 0005616c69636503626f6205
+You can send the proof tx:
+hyled proof BLOB_TX_HASH 0 erc20_rust erc20.risc0.proof
 ```
 
 Key information includes:
-- **Method ID**: `303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512`, which will be used later to register the contract on Hylé.
-- **Initial State Transition**: `ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d`, which will be set when registering the contract on Hylé.
-- **Next State Transition**: `f5cbdc50df4fbea14ff33c28b496cff6021bf3d9977380bc116f4f5698e30b38`, which will be visible on Hylé once the proof is validated.
-
-### Proof Verification - Locally
-
-Install the [Hylé RISC Zero verifier](https://github.com/Hyle-org/verifiers-for-hyle).
-
-You can then verify proofs in **risc0-verifier/**, run:
-
-```sh
-cargo run -p risc0-verifier 303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512 ../../../examples/erc20/rust/erc20.risc0.proof
-```
-
-Expected result should look similar to:
-
-```sh
-{ version: 1, initial_state: [237, ..., 61], next_state: [245, ..., 56], identity: "bob", tx_hash: [1], index: 0, blobs: [1, ..., 0], success: true, program_outputs: "Minted 100 to bob" }
-```
+- **Method ID**: `9bbfa2ef3131b9aab7db20ce72349ef3edf536d08d7932fa6dd1bf8f25d08d7a`, which will be used later to register the contract on Hylé.
+- **Initial State Transition**: `0106666175636574fc40420f00`, which will be set when registering the contract on Hylé. This is an encoded version of the `Balances` object.
+- **Blob payload**: ` 0005616c69636503626f6205`, which will be sequenced on the chain
 
 ### Register Contract on Hylé
 
-- RISC Zero smart contracts are identified by their image ID. Two identical programs will have identical image IDs.
-- State digest is our initial value: `ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d`.
+You can install the hyled tool :
 
-Run:
 
 ```sh
-./hyled tx zktx register default risczero 303e545f9544750795d00a202143531f5aa616546c5aae90a34b4d3c1fa95512 erc20_rust ed286b3c39b2f86f9ce86bbc35455fe7e8f7b3f9683ba76e0bcc637eb5602f3d
+cargo install --git https://github.com/Hyle-org/hyle.git --bin hyled
 ```
 
-The contract will be deployed with the state_digest value = 1 (AAAAAQ==).
+And then run:
+
+```sh
+hyled contract default risc0 9bbfa2ef3131b9aab7db20ce72349ef3edf536d08d7932fa6dd1bf8f25d08d7a erc20_rust 0106666175636574fc40420f00
+```
+
+The contract will be deployed with an inital state with a faucet account 
 
 
 ### Publish Payload on Hylé
@@ -80,7 +74,7 @@ The contract will be deployed with the state_digest value = 1 (AAAAAQ==).
 Run:
 
 ```sh
-./hyled tx zktx publish "bob" erc20_rust <payload>
+hyled blob "bob" erc20_rust <payload>
 ```
 
 
@@ -94,7 +88,7 @@ Example: `DB38EC67872788B3B325ED52D3E487BBD1BFCBE98B2EDD63918DBB080E7BDDD0`.
 Run by replacing `[transaction_hash]` with the one used to settle the payload: `DB38EC67872788B3B325ED52D3E487BBD1BFCBE98B2EDD63918DBB080E7BDDD0`.
 
 ```sh
-./hyled tx zktx prove [transaction_hash] 0 erc20_rust ../examples/erc20/rust/erc20.risc0.proof
+hyled proof [transaction_hash] 0 erc20_rust erc20.risc0.proof
 ```
 
 

@@ -1,12 +1,27 @@
+use core::panic;
+
 use methods::METHOD_ELF;
 
+use anyhow::{bail, Error, Result};
 use sdk::HyleOutput;
+use serde::Deserialize;
 use utils::{Balances, ContractFunction, TokenContractInput};
 
 use borsh::to_vec;
 
 use clap::{Parser, Subcommand};
 use risc0_zkvm::{default_prover, sha::Digestible, ExecutorEnv};
+
+#[derive(Debug, Deserialize)]
+pub struct ContractName(pub String);
+
+#[derive(Deserialize, Debug)]
+pub struct Contract {
+    pub name: ContractName,
+    pub program_id: Vec<u8>,
+    pub state: sdk::StateDigest,
+    pub verifier: String,
+}
 
 #[derive(Subcommand)]
 pub enum ContractFunctionCommand {
@@ -39,11 +54,56 @@ struct Cli {
     command: ContractFunctionCommand,
 
     #[clap(long, short)]
+    init: bool,
+
+    #[clap(long, short)]
     reproducible: bool,
+
+    #[arg(long, default_value = "localhost")]
+    pub host: String,
+
+    #[arg(long, default_value = "4321")]
+    pub port: u32,
+
+    #[arg(long, alias = "n", default_value = "erc20_rust")]
+    pub contract_name: String,
+}
+
+fn fetch_current_state(cli: &Cli) -> Result<Balances, Error> {
+    let url = format!("http://{}:{}", cli.host, cli.port);
+    let resp = reqwest::blocking::get(format!("{}/v1/contract/{}", url, cli.contract_name))?;
+
+    let status = resp.status();
+    let body = resp.text()?;
+
+    if let Ok(contract) = serde_json::from_str::<Contract>(&body) {
+        println!("Fetched contract: {:?}", contract);
+        return Ok(contract.state.try_into()?);
+    } else {
+        bail!(
+            "Failed to parse JSON response, status: {}, body: {}",
+            status,
+            body
+        );
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
+
+    let initial_state = if cli.init {
+        Balances::default()
+    } else {
+        match fetch_current_state(&cli) {
+            Ok(s) => s,
+            Err(e) => {
+                println!("fetch current state error: {}", e);
+                return;
+            }
+        }
+    };
+
+    println!("Inital state: {:?}", initial_state);
 
     if cli.reproducible {
         println!("Running with reproducible ELF binary.");
@@ -55,7 +115,7 @@ fn main() {
     let hex_program_inputs = hex::encode(program_inputs.encode());
     println!("program_inputs: {:?}", program_inputs);
     println!("program_inputs (hex): {:?}", hex_program_inputs);
-    let prove_info = prove(cli.reproducible, program_inputs);
+    let prove_info = prove(cli.reproducible, program_inputs, initial_state);
 
     let receipt = prove_info.receipt;
     let encoded_receipt = to_vec(&receipt).expect("Unable to encode receipt");
@@ -81,24 +141,31 @@ fn main() {
     println!("{:?}", hyle_output);
 
     println!("{}", "-".repeat(20));
-    println!("You can register the contract by running:");
-    println!(
-        "hyled contract default risc0 {} erc20_rust {}",
-        method_id, initial_state
-    );
+    if cli.init {
+        println!("You can register the contract by running:");
+        println!(
+            "hyled contract default risc0 {} {} {}",
+            method_id, cli.contract_name, initial_state
+        );
+    }
     println!("You can send the blob tx:");
     println!("hyled blob IDENTITY erc20_rust {}", hex_program_inputs);
     println!("You can send the proof tx:");
-    println!("hyled proof BLOB_TX_HASH 0 erc20_rust erc20.risc0.proof");
+    println!(
+        "hyled proof BLOB_TX_HASH 0 {} erc20.risc0.proof",
+        cli.contract_name
+    );
 
     receipt
         .verify(claim.pre.digest())
         .expect("Verification 2 failed");
 }
 
-fn prove(reproducible: bool, program_inputs: ContractFunction) -> risc0_zkvm::ProveInfo {
-    // TODO: Allow user to add custom balance
-    let balances = Balances::default();
+fn prove(
+    reproducible: bool,
+    program_inputs: ContractFunction,
+    balances: Balances,
+) -> risc0_zkvm::ProveInfo {
     // TODO: Allow user to add real tx_hash
     let tx_hash = vec![1];
     // TODO: Allow user to add multiple values in payload
