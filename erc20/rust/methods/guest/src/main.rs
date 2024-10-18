@@ -26,7 +26,7 @@ fn main() {
                 initial_state: initial_balances.as_state(),
                 next_state: initial_balances.as_state(),
                 identity: sdk::Identity("".to_string()),
-                tx_hash: sdk::TxHash(input.tx_hash.clone()),
+                tx_hash: sdk::TxHash(input.tx_hash),
                 index: sdk::BlobIndex(input.index as u32),
                 blobs: flattened_blobs,
                 success: false,

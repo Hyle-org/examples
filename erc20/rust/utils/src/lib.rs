@@ -132,7 +132,7 @@ impl Balances {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenContractInput {
     pub balances: Balances,
-    pub tx_hash: Vec<u8>,
+    pub tx_hash: String,
     pub blobs: Vec<Vec<u8>>,
     pub index: usize,
 }

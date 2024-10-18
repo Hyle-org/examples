@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdk = { git = "https://github.com/Hyle-org/hyle.git", package = "sdk", branch = "sdk" }
+sdk = { git = "https://github.com/Hyle-org/hyle.git", package = "hyle-contract-sdk" }
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "alloc",
