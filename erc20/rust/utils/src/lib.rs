@@ -10,21 +10,7 @@ use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Sha3_256};
 
-// FIXME: This is meant to be imported from hyle repo
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct HyleOutput {
-    pub version: u32,
-    pub initial_state: Vec<u8>,
-    pub next_state: Vec<u8>,
-    pub identity: String,
-    pub tx_hash: Vec<u8>,
-    pub index: u32,
-    pub blobs: Vec<u8>,
-    pub success: bool,
-    pub program_outputs: Vec<u8>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Hash, bincode::Encode, bincode::Decode)]
 pub struct Account {
     name: String,
     balance: u64,
@@ -49,7 +35,7 @@ impl Account {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Hash)]
+#[derive(Clone, Serialize, Deserialize, Debug, Hash, bincode::Encode, bincode::Decode)]
 pub struct Balances {
     accounts: Vec<Account>,
 }
@@ -60,8 +46,24 @@ impl Default for Balances {
         }
     }
 }
+impl TryFrom<sdk::StateDigest> for Balances {
+    type Error = Error;
+
+    fn try_from(state: sdk::StateDigest) -> Result<Self, Self::Error> {
+        let (balances, _) = bincode::decode_from_slice(&state.0, bincode::config::standard())
+            .map_err(|_| anyhow::anyhow!("Could not decode start height"))?;
+        Ok(balances)
+    }
+}
 
 impl Balances {
+    pub fn as_state(&self) -> sdk::StateDigest {
+        sdk::StateDigest(
+            bincode::encode_to_vec(self, bincode::config::standard())
+                .expect("Failed to encode Balances"),
+        )
+    }
+
     pub fn add_account(&mut self, account: Account) {
         self.accounts.push(account);
     }
@@ -130,7 +132,7 @@ impl Balances {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TokenContractInput {
     pub balances: Balances,
-    pub tx_hash: Vec<u8>,
+    pub tx_hash: String,
     pub blobs: Vec<Vec<u8>>,
     pub index: usize,
 }
