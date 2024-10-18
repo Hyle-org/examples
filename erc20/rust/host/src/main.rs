@@ -1,9 +1,7 @@
-use core::panic;
-
 use methods::METHOD_ELF;
 
 use anyhow::{bail, Error, Result};
-use sdk::{HyleOutput, TxHash};
+use sdk::HyleOutput;
 use serde::Deserialize;
 use utils::{Balances, ContractFunction, TokenContractInput};
 
@@ -167,7 +165,7 @@ fn prove(
     balances: Balances,
 ) -> risc0_zkvm::ProveInfo {
     // TODO: Allow user to add real tx_hash
-    let tx_hash = TxHash::default();
+    let tx_hash = "".to_string();
     // TODO: Allow user to add multiple values in payload
     let blobs = vec![program_inputs.encode()];
     let index = 0;
