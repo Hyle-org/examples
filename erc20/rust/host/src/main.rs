@@ -23,6 +23,7 @@ pub struct Contract {
 
 #[derive(Subcommand)]
 pub enum ContractFunctionCommand {
+    State,
     Transfer {
         from: String,
         to: String,
@@ -40,6 +41,7 @@ impl From<ContractFunctionCommand> for ContractFunction {
                 ContractFunction::Transfer { from, to, amount }
             }
             ContractFunctionCommand::Mint { to, amount } => ContractFunction::Mint { to, amount },
+            ContractFunctionCommand::State => panic!("State command is not a valid function"),
         }
     }
 }
@@ -102,6 +104,9 @@ fn main() {
     };
 
     println!("Inital state: {:?}", initial_state);
+    if matches!(cli.command, ContractFunctionCommand::State) {
+        return;
+    }
 
     if cli.reproducible {
         println!("Running with reproducible ELF binary.");
