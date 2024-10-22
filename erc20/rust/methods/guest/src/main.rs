@@ -6,14 +6,15 @@ extern crate alloc;
 use alloc::format;
 use alloc::string::ToString;
 use risc0_zkvm::guest::env;
-use utils::{ContractFunction, HyleOutput, TokenContractInput};
+use sdk::HyleOutput;
+use utils::{ContractFunction, TokenContractInput};
 
 risc0_zkvm::guest::entry!(main);
 
 fn main() {
     let mut input: TokenContractInput = env::read();
 
-    let initial_state = input.balances.hash();
+    let initial_balances = input.balances.clone();
 
     let payload = match input.blobs.get(input.index) {
         Some(v) => v,
@@ -22,11 +23,11 @@ fn main() {
             let flattened_blobs = input.blobs.into_iter().flatten().collect();
             env::commit(&HyleOutput {
                 version: 1,
-                initial_state: initial_state.clone(),
-                next_state: initial_state,
-                identity: "".to_string(),
-                tx_hash: input.tx_hash.clone(),
-                index: input.index as u32,
+                initial_state: initial_balances.as_state(),
+                next_state: initial_balances.as_state(),
+                identity: sdk::Identity("".to_string()),
+                tx_hash: sdk::TxHash(input.tx_hash),
+                index: sdk::BlobIndex(input.index as u32),
                 blobs: flattened_blobs,
                 success: false,
                 program_outputs: "Payload not found".to_string().into_bytes(),
@@ -68,16 +69,16 @@ fn main() {
         }
     };
     env::log(&format!("New balances: {:?}", input.balances));
-    let next_state = input.balances.hash();
+    let next_balances = input.balances;
 
     let flattened_blobs = input.blobs.into_iter().flatten().collect();
     env::commit(&HyleOutput {
         version: 1,
-        initial_state,
-        next_state,
-        identity,
-        tx_hash: input.tx_hash,
-        index: input.index as u32,
+        initial_state: initial_balances.as_state(),
+        next_state: next_balances.as_state(),
+        identity: sdk::Identity(identity),
+        tx_hash: sdk::TxHash(input.tx_hash),
+        index: sdk::BlobIndex(input.index as u32),
         blobs: flattened_blobs,
         success,
         program_outputs,
