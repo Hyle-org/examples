@@ -2,7 +2,7 @@
 
 This repository is a collection of examples of contracts and programs that can be deployed and used on Hylé.
 
-Hylé does not have a native execution environment, smart contracts do not execute code on Hylé, they describe a verifiation logic for a particular program. 
+Hylé does not have a native execution environment, smart contracts do not execute code on Hylé, they describe a verification logic for a particular program. 
 
 ### Structure
 
