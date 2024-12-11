@@ -8,16 +8,48 @@ The smart contract is written in Rust, you can run it with several ZKVMs:
 
 ## RISC Zero
 
+To use RISC Zero, you'll need to compile with
+
+```
+cargo build --features risc0
+```
+
+The matching binary is `risc0-runner`.
+
 ### Installing RISC Zero
 
 Please refer to [RiscZero's installation guide](https://dev.risczero.com/api/zkvm/install)
 
 ### Reproducible builds
 
-RISC Zero provides using a docker setup. Simply run
+RISC Zero provides reproducible builds using a docker setup. Simply run
 
 ```bash
-cargo risczero build --manifest-path methods/guest/Cargo.toml
+cargo risczero build
+```
+
+to build the smart contract.
+
+## SP1
+
+To use SP1, you'll need to compile with
+
+```
+cargo build --features sp1
+```
+
+The matching binary is `sp1-runner`.
+
+### Installing SP1
+
+Please refer to [SP1's installation guide](https://docs.succinct.xyz/docs/getting-started/install)
+
+### Reproducible builds
+
+SP1 provides reproducible builds using a docker setup. Simply run
+
+```bash
+cargo prove build --docker
 ```
 
 to build the smart contract.
@@ -38,16 +70,4 @@ cargo run -- -r reset X
 
 ### Verifying locally
 
-Install the [Hylé RISC Zero verifier](https://github.com/Hyle-org/verifiers-for-hyle).
-You can then verify proofs using:
-
-```sh
-# The verifier currently expects no `0x` prefix. Pass data as base64 values.
-cargo run -p risc0-verifier 14ecbb1bc768586be869bb32be7a337fc3c0c67d51ebfe9a4baf6570446b9e12 [path_to_proof] [initial_state] [final_state]
-```
-
-If the proof is malformed, or doesn't respect the rules of the smart contract, the verifier will return an error.
-
-## Verifying on Hylé
-
-Once you [installed the CLI](https://docs.hyle.eu/developers/using-the-cli/hyled-install-instructions/) and got [connected to devnet](https://docs.hyle.eu/developers/using-the-cli/connect-to-devnet/), you should be able to [_register_ and _execute_ for your contract](https://docs.hyle.eu/developers/using-the-cli/your-first-smart-contract/).
+Coming soon!
