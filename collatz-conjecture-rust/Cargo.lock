@@ -1771,7 +1771,8 @@ dependencies = [
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.1.0"
+version = "0.3.0"
+source = "git+https://github.com/hyle-org/hyle#dade3621008233a4345478c1e20db005b19f3c24"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.3",

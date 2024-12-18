@@ -26,7 +26,9 @@ hyle-contract-sdk = { git = "https://github.com/hyle-org/hyle" }
 clap = { version = "4.5.23", features = ["derive"] }
 borsh = "1.5.3"
 
-risc0-zkvm = { version = "1.2.0", default-features = false, optional = true }
+risc0-zkvm = { version = "1.2.0", default-features = false, features = [
+    "std",
+], optional = true }
 sp1-zkvm = { version = "3.4.0", optional = true }
 sp1-sdk = { version = "3.4.0", default-features = false, optional = true }
 serde_json = "1.0.133"
