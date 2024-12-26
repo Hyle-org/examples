@@ -20,3 +20,4 @@ hex = "0.4.3"
 anyhow = "1.0.95"
 tokio = { version = "1.42.0", features = ["full", "tracing"] }
 reqwest = "0.12.9"
+borsh = "1.5.3"

@@ -31,6 +31,15 @@ The node will
 - settle the blob transaction
 - Update the contract state 
 
+On node's logs you should see:
+
+>  INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+>  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
+
+And after a slot: 
+
+>   INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+
 Note: The example does not compose with an identity contract, thus no identity verification is made. 
 This is the reason of the suffix ".simple_token" on the "from" & "to" transfer fields. More info to come in the documentation.
 

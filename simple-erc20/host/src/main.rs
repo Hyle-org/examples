@@ -6,6 +6,7 @@ use hyle::model::BlobTransaction;
 use hyle::model::ProofData;
 use hyle::model::ProofTransaction;
 use hyle::model::RegisterContractTransaction;
+use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv};
 use sdk::HyleOutput;
 use sdk::{ContractInput, Digestable};
@@ -114,7 +115,7 @@ async fn main() {
                 index: sdk::BlobIndex(0),
             };
 
-            let hyle_output = prove(cli.reproducible, inputs).unwrap();
+            let receipt = prove(cli.reproducible, inputs).unwrap();
 
             let blob_tx_hash = client
                 .send_tx_blob(&BlobTransaction {
@@ -128,7 +129,9 @@ async fn main() {
             let proof_tx_hash = client
                 .send_tx_proof(&ProofTransaction {
                     blob_tx_hash,
-                    proof: ProofData::Bytes(serde_json::to_vec(&hyle_output).unwrap()),
+                    proof: ProofData::Bytes(
+                        borsh::to_vec(&receipt).expect("Unable to encode receipt"),
+                    ),
                     contract_name: contract_name.clone().into(),
                 })
                 .await
@@ -141,7 +144,7 @@ async fn main() {
     }
 }
 
-fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<HyleOutput> {
+fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<Receipt> {
     let env = ExecutorEnv::builder()
         .write(&input)
         .unwrap()
@@ -170,5 +173,5 @@ fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<HyleOutput> 
         );
         bail!("Execution failed");
     }
-    Ok(hyle_output)
+    Ok(receipt)
 }
