@@ -40,6 +40,14 @@ And after a slot:
 
 >   INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
 
+You can check onchain balance:
+
+```bash
+cargo run -- balance faucet.simple_token
+
+cargo run -- balance bob.simple_token
+```
+
 Note: The example does not compose with an identity contract, thus no identity verification is made. 
 This is the reason of the suffix ".simple_token" on the "from" & "to" transfer fields. More info to come in the documentation.
 

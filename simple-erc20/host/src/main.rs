@@ -2,12 +2,14 @@ use anyhow::bail;
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use contract::Token;
+use contract::TokenContract;
 use hyle::model::BlobTransaction;
 use hyle::model::ProofData;
 use hyle::model::ProofTransaction;
 use hyle::model::RegisterContractTransaction;
 use risc0_zkvm::Receipt;
 use risc0_zkvm::{default_prover, ExecutorEnv};
+use sdk::erc20::ERC20;
 use sdk::HyleOutput;
 use sdk::{ContractInput, Digestable};
 
@@ -41,6 +43,9 @@ enum Commands {
         from: String,
         to: String,
         amount: u128,
+    },
+    Balance {
+        of: String,
     },
 }
 
@@ -84,6 +89,17 @@ async fn main() {
                 "✅ Register contract tx sent. Tx hash: {}",
                 res.text().await.unwrap()
             );
+        }
+        Commands::Balance { of } => {
+            let state: Token = client
+                .get_contract(&contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            let contract = TokenContract::init(state, of.clone().into());
+            println!("Balance of {}: {}", of, contract.balance_of(&of).unwrap());
         }
         Commands::Transfer { from, to, amount } => {
             let initial_state: Token = client
