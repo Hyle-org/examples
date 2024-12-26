@@ -1,6 +1,6 @@
-# Simple ERC20 risc0 example
+# Simple Token transfer risc0 example
 
-Welcome to the simple ERC20 risc0 example, this is a simple contract to get started with.
+Welcome to the simple_token risc0 example, this is a simple contract to get started with.
 
 ## Quick Start
 
@@ -34,6 +34,7 @@ The node will
 On node's logs you should see:
 
 >  INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+> 
 >  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
 
 And after a slot: 

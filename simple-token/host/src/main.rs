@@ -123,8 +123,8 @@ async fn main() {
                 ),
             }];
             let blob_tx = BlobTransaction {
-                identity: from.into(),
-                blobs,
+                identity: from.clone().into(),
+                blobs: blobs.clone(),
             };
 
             // Send the blob transaction
