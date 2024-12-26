@@ -58,39 +58,36 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    if cli.reproducible {
-        println!("Running with reproducible ELF binary.");
-    } else {
-        println!("Running non-reproducibly");
-    }
-
     let client = hyle::tools::rest_api_client::ApiHttpClient::new(cli.host);
 
     let contract_name = &cli.contract_name;
 
     match cli.command {
         Commands::Register { supply } => {
+            // Build initial state of contract
             let initial_state = Token::new(supply, format!("faucet.{}", contract_name).into());
-
             println!("Initial state: {:?}", initial_state);
-            let initial_state = initial_state.as_digest();
 
+            // Send the transaction to register the contract
+            let register_tx = RegisterContractTransaction {
+                owner: "examples".to_string(),
+                verifier: "risc0".into(),
+                program_id: sdk::ProgramId(sdk::to_u8_array(&GUEST_ID).to_vec()),
+                state_digest: initial_state.as_digest(),
+                contract_name: contract_name.clone().into(),
+            };
             let res = client
-                .send_tx_register_contract(&RegisterContractTransaction {
-                    owner: "examples".to_string(),
-                    verifier: "risc0".into(),
-                    program_id: sdk::ProgramId(sdk::to_u8_array(&GUEST_ID).to_vec()),
-                    state_digest: initial_state,
-                    contract_name: contract_name.clone().into(),
-                })
+                .send_tx_register_contract(&register_tx)
+                .await
+                .unwrap()
+                .text()
                 .await
                 .unwrap();
-            println!(
-                "✅ Register contract tx sent. Tx hash: {}",
-                res.text().await.unwrap()
-            );
+
+            println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
         Commands::Balance { of } => {
+            // Fetch the state from the node
             let state: Token = client
                 .get_contract(&contract_name.clone().into())
                 .await
@@ -98,22 +95,26 @@ async fn main() {
                 .state
                 .into();
 
-            let contract = TokenContract::init(state, of.clone().into());
-            println!("Balance of {}: {}", of, contract.balance_of(&of).unwrap());
+            let contract = TokenContract::init(state, "".into());
+            let balance = contract.balance_of(&of).unwrap();
+            println!("Balance of {}: {}", of, balance);
         }
         Commands::Transfer { from, to, amount } => {
+            // Fetch the initial state from the node
             let initial_state: Token = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .unwrap()
                 .state
                 .into();
+            // ----
+            // Build the blob transaction
+            // ----
 
             let action = sdk::erc20::ERC20Action::Transfer {
                 recipient: to.clone(),
                 amount,
             };
-
             let blobs = vec![sdk::Blob {
                 contract_name: contract_name.clone().into(),
                 data: sdk::BlobData(
@@ -121,7 +122,20 @@ async fn main() {
                         .expect("failed to encode BlobData"),
                 ),
             }];
+            let blob_tx = BlobTransaction {
+                identity: from.into(),
+                blobs,
+            };
 
+            // Send the blob transaction
+            let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
+            println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+
+            // ----
+            // Prove the state transition
+            // ----
+
+            // Build the contract input
             let inputs = ContractInput::<Token> {
                 initial_state,
                 identity: from.clone().into(),
@@ -131,35 +145,29 @@ async fn main() {
                 index: sdk::BlobIndex(0),
             };
 
+            // Generate the zk proof
             let receipt = prove(cli.reproducible, inputs).unwrap();
 
-            let blob_tx_hash = client
-                .send_tx_blob(&BlobTransaction {
-                    identity: from.into(),
-                    blobs,
-                })
-                .await
-                .unwrap();
-            println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+            let proof_tx = ProofTransaction {
+                blob_tx_hash,
+                proof: ProofData::Bytes(borsh::to_vec(&receipt).expect("Unable to encode receipt")),
+                contract_name: contract_name.clone().into(),
+            };
 
+            // Send the proof transaction
             let proof_tx_hash = client
-                .send_tx_proof(&ProofTransaction {
-                    blob_tx_hash,
-                    proof: ProofData::Bytes(
-                        borsh::to_vec(&receipt).expect("Unable to encode receipt"),
-                    ),
-                    contract_name: contract_name.clone().into(),
-                })
+                .send_tx_proof(&proof_tx)
+                .await
+                .unwrap()
+                .text()
                 .await
                 .unwrap();
-            println!(
-                "✅ Proof tx sent. Tx hash: {}",
-                proof_tx_hash.text().await.unwrap()
-            );
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
     }
 }
 
+// TODO(hyle): move to client sdk
 fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<Receipt> {
     let env = ExecutorEnv::builder()
         .write(&input)
@@ -168,6 +176,13 @@ fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<Receipt> {
         .unwrap();
 
     let prover = default_prover();
+
+    if reproducible {
+        println!("Running with reproducible ELF binary.");
+    } else {
+        println!("Running non-reproducibly");
+    }
+
     let binary = if reproducible {
         std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
             .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
