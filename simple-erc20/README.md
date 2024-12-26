@@ -1,11 +1,6 @@
-# RISC Zero Rust Starter Template
+# Simple ERC20 risc0 example
 
-Welcome to the RISC Zero Rust Starter Template! This template is intended to
-give you a starting point for building a project using the RISC Zero zkVM.
-Throughout the template (including in this README), you'll find comments
-labelled `TODO` in places where you'll need to make changes. To better
-understand the concepts behind this template, check out the [zkVM
-Overview][zkvm-overview].
+Welcome to the simple ERC20 risc0 example, this is a simple contract to get started with.
 
 ## Quick Start
 
@@ -13,15 +8,31 @@ First, make sure [rustup] is installed. The
 [`rust-toolchain.toml`][rust-toolchain] file will be used by `cargo` to
 automatically install the correct version.
 
-To build all methods and execute the method within the zkVM, run the following
-command:
-
+To build all methods and register the smart contract on the local node, run:
 ```bash
-cargo run
+cargo run -- register 1000
+```
+On the node's logs, you should see a line like 
+
+> 📝 Registering new contract simple_token
+
+To send a blob & proof transactions to send 2 token to *bob* you can run:
+```bash
+cargo run -- transfer faucet.simple_token bob.simple_token 2
 ```
 
-This is an empty template, and so there is no expected output (until you modify
-the code).
+This will 
+- send a Blob transaction to transfer 2 token from faucet to bob
+- Generate a zk proof
+- Send the proof 
+
+The node will 
+- verify the proof 
+- settle the blob transaction
+- Update the contract state 
+
+Note: The example does not compose with an identity contract, thus no identity verification is made. 
+This is the reason of the suffix ".simple_token" on the "from" & "to" transfer fields. More info to come in the documentation.
 
 ### Executing the Project Locally in Development Mode
 
@@ -33,25 +44,20 @@ Put together, the command to run your project in development mode while getting 
 RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run
 ```
 
-### Running Proofs Remotely on Bonsai
+<!--### Running Proofs Remotely on Bonsai-->
+<!---->
+<!--_Note: The Bonsai proving service is still in early Alpha; an API key is-->
+<!--required for access. [Click here to request access][bonsai access]._-->
+<!---->
+<!--If you have access to the URL and API key to Bonsai you can run your proofs-->
+<!--remotely. To prove in Bonsai mode, invoke `cargo run` with two additional-->
+<!--environment variables:-->
+<!---->
+<!--```bash-->
+<!--BONSAI_API_KEY="YOUR_API_KEY" BONSAI_API_URL="BONSAI_URL" cargo run-->
+<!--```-->
 
-_Note: The Bonsai proving service is still in early Alpha; an API key is
-required for access. [Click here to request access][bonsai access]._
-
-If you have access to the URL and API key to Bonsai you can run your proofs
-remotely. To prove in Bonsai mode, invoke `cargo run` with two additional
-environment variables:
-
-```bash
-BONSAI_API_KEY="YOUR_API_KEY" BONSAI_API_URL="BONSAI_URL" cargo run
-```
-
-## How to Create a Project Based on This Template
-
-Search this template for the string `TODO`, and make the necessary changes to
-implement the required feature described by the `TODO` comment. Some of these
-changes will be complex, and so we have a number of instructional resources to
-assist you in learning how to write your own code for the RISC Zero zkVM:
+## How to create a project based on this example 
 
 - The [RISC Zero Developer Docs][dev-docs] is a great place to get started.
 - Example projects are available in the [examples folder][examples] of
@@ -69,36 +75,30 @@ applications, which we think is a good starting point for your applications.
 ```text
 project_name
 ├── Cargo.toml
+├── contract 
+│   ├── Cargo.toml
+│   └── src
+│       └── lib.rs         <-- [Contract code goes here, common to host & guest]
 ├── host
 │   ├── Cargo.toml
 │   └── src
-│       └── main.rs                    <-- [Host code goes here]
+│       └── main.rs        <-- [Host code goes here]
 └── methods
     ├── Cargo.toml
     ├── build.rs
     ├── guest
     │   ├── Cargo.toml
     │   └── src
-    │       └── main.rs                <-- [Guest code goes here]
+    │       └── main.rs    <-- [Guest code goes here]
     └── src
         └── lib.rs
 ```
 
-## Video Tutorial
-
-For a walk-through of how to build with this template, check out this [excerpt
-from our workshop at ZK HACK III][zkhack-iii].
-
-## Questions, Feedback, and Collaborations
-
-We'd love to hear from you on [Discord][discord] or [Twitter][twitter].
-
-[bonsai access]: https://bonsai.xyz/apply
+<!--[bonsai access]: https://bonsai.xyz/apply-->
 [cargo-risczero]: https://docs.rs/cargo-risczero
 [crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
 [dev-docs]: https://dev.risczero.com
 [dev-mode]: https://dev.risczero.com/api/generating-proofs/dev-mode
-[discord]: https://discord.gg/risczero
 [docs.rs]: https://docs.rs/releases/search?query=risc0
 [examples]: https://github.com/risc0/risc0/tree/main/examples
 [risc0-build]: https://docs.rs/risc0-build
@@ -106,6 +106,4 @@ We'd love to hear from you on [Discord][discord] or [Twitter][twitter].
 [risc0-zkvm]: https://docs.rs/risc0-zkvm
 [rust-toolchain]: rust-toolchain.toml
 [rustup]: https://rustup.rs
-[twitter]: https://twitter.com/risczero
-[zkhack-iii]: https://www.youtube.com/watch?v=Yg_BGqj_6lg&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=5
 [zkvm-overview]: https://dev.risczero.com/zkvm
