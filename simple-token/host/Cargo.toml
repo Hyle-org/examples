@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", branch = "feature_gate", package = "hyle-contract-sdk" }
-hyle = { git = "https://github.com/hyle-org/hyle", branch = "feature_gate", default-features = false, package = "hyle" }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk" }
+hyle = { git = "https://github.com/hyle-org/hyle", default-features = false, package = "hyle" }
 contract = { path = "../contract", package = "contract"}
 
 # hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }
