@@ -3,10 +3,10 @@ use sdk::erc20::ERC20Action;
 
 fn main() {
     // Parse contract inputs
-    let (input, action) = sdk::guest::init_raw::<Token, ERC20Action>();
+    let (input, action) = sdk::guest::init_raw::<ERC20Action>();
 
     // Parse initial state as Token
-    let state: Token = input.initial_state.clone();
+    let state: Token = input.initial_state.clone().into();
 
     // Execute the given action
     let mut contract = TokenContract::init(state, input.identity.clone());
