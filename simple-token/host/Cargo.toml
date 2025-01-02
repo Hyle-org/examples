@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk" }
+client-sdk = { git = "https://github.com/hyle-org/hyle", branch="client_sdk_prove", package = "client-sdk" }
 hyle = { git = "https://github.com/hyle-org/hyle", default-features = false, package = "hyle" }
 contract = { path = "../contract", package = "contract"}
 

@@ -146,11 +146,20 @@ async fn main() {
             };
 
             // Generate the zk proof
-            let receipt = prove(cli.reproducible, inputs).unwrap();
+            //
+            let binary = if cli.reproducible {
+                println!("Running with reproducible ELF binary.");
+                std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
+                    .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
+            } else {
+                println!("Running non-reproducibly");
+                GUEST_ELF.to_vec()
+            };
+            let (proof, _) = client_sdk::helpers::prove(binary, inputs).unwrap();
 
             let proof_tx = ProofTransaction {
-                blob_tx_hash,
-                proof: ProofData::Bytes(borsh::to_vec(&receipt).expect("Unable to encode receipt")),
+                tx_hashes: vec![blob_tx_hash],
+                proof,
                 contract_name: contract_name.clone().into(),
             };
 
@@ -165,44 +174,4 @@ async fn main() {
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
     }
-}
-
-// TODO(hyle): move to client sdk
-fn prove(reproducible: bool, input: ContractInput<Token>) -> Result<Receipt> {
-    let env = ExecutorEnv::builder()
-        .write(&input)
-        .unwrap()
-        .build()
-        .unwrap();
-
-    let prover = default_prover();
-
-    if reproducible {
-        println!("Running with reproducible ELF binary.");
-    } else {
-        println!("Running non-reproducibly");
-    }
-
-    let binary = if reproducible {
-        std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-            .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-    } else {
-        GUEST_ELF.to_vec()
-    };
-    let receipt = prover.prove(env, &binary).unwrap().receipt;
-
-    let hyle_output = receipt
-        .journal
-        .decode::<HyleOutput>()
-        .expect("Failed to decode journal");
-
-    if !hyle_output.success {
-        let program_error = std::str::from_utf8(&hyle_output.program_outputs).unwrap();
-        println!(
-            "\x1b[91mExecution failed ! Program output: {}\x1b[0m",
-            program_error
-        );
-        bail!("Execution failed");
-    }
-    Ok(receipt)
 }
