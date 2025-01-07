@@ -1,56 +1,71 @@
 # Simple Token transfer risc0 example
 
-Welcome to the simple_token risc0 example, this is a simple contract to get started with.
+Welcome to the simple_token Risc0 example.
 
-## Quick Start
+## Prerequisites
 
-First, make sure [rustup] is installed. The
-[`rust-toolchain.toml`][rust-toolchain] file will be used by `cargo` to
-automatically install the correct version.
+- [Install Rust](https://www.rust-lang.org/tools/install) (you'll need `rustup` and Cargo).
+- For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
+- [Start a single-node devnet](./devnet.md). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
 
-To build all methods and register the smart contract on the local node, run:
+## Quickstart
+
+### Build and register the contract
+
+To build all methods and register the smart contract on the local node [from the source](https://github.com/Hyle-org/examples/blob/simple_erc20/simple-token/host/src/main.rs), run:
+
 ```bash
 cargo run -- register 1000
 ```
-On the node's logs, you should see a line like 
 
-> 📝 Registering new contract simple_token
+The expected output is `📝 Registering new contract simple_token`.
 
-To send a blob & proof transactions to send 2 token to *bob* you can run:
+### Transfer tokens
+
+To transfer 2 tokens from `faucet` to `Bob`:
+
 ```bash
 cargo run -- transfer faucet.simple_token bob.simple_token 2
 ```
 
-This will 
-- send a Blob transaction to transfer 2 token from faucet to bob
-- Generate a zk proof
-- Send the proof 
+This command will:
 
-The node will 
-- verify the proof 
-- settle the blob transaction
-- Update the contract state 
+1. Send a blob transaction to transfer 2 tokens from `faucet` to `bob`.
+2. Generate a ZK proof of that transfer.
+3. Send the proof to the devnet.
 
-On node's logs you should see:
+### Verify settled state
 
->  INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-> 
->  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
+Upon reception of the proof, the node will:
 
-And after a slot: 
+1. Verify the proof
+1. Settle the blob transaction
+1. Update the contract's state
 
->   INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+The node's logs will display:
 
-You can check onchain balance:
+```bash
+INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
+```
+
+And on the following slot:
+
+```bash
+INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+```
+
+#### Check onchain balance
+
+Verify onchain balances:
 
 ```bash
 cargo run -- balance faucet.simple_token
-
 cargo run -- balance bob.simple_token
 ```
 
-Note: The example does not compose with an identity contract, thus no identity verification is made. 
-This is the reason of the suffix ".simple_token" on the "from" & "to" transfer fields. More info to come in the documentation.
+!!! note
+    In this example, we do not verify the identity of the person who initiates the transaction. We use `.simple_token` as a suffix for the "from" and "to" transfer fields: usually, we'd use the identity scheme as the suffix.
 
 ### Executing the Project Locally in Development Mode
 
@@ -75,7 +90,7 @@ RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run
 <!--BONSAI_API_KEY="YOUR_API_KEY" BONSAI_API_URL="BONSAI_URL" cargo run-->
 <!--```-->
 
-## How to create a project based on this example 
+## How to create a project based on this example
 
 - The [RISC Zero Developer Docs][dev-docs] is a great place to get started.
 - Example projects are available in the [examples folder][examples] of
