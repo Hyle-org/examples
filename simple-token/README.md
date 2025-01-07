@@ -6,7 +6,7 @@ Welcome to the simple_token Risc0 example.
 
 - [Install Rust](https://www.rust-lang.org/tools/install) (you'll need `rustup` and Cargo).
 - For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
-- [Start a single-node devnet](./devnet.md). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
+- [Start a single-node devnet](https://docs.hyle.eu/developers/quickstart/devnet/). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
 
 ## Quickstart
 
