@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "lib",
+    "program",
+    "script",
+]
+resolver = "2"
+
+[workspace.dependencies]
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch = "sp1_4_0_0" }
+
+
