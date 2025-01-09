@@ -1,71 +1,68 @@
-# Simple Token transfer risc0 example
+# Simple Identity risc0 example
 
-Welcome to the simple_token Risc0 example.
+On Hylé, any smart contract can serve as proof of identity. This flexibility allows you to register your preferred identity source as a smart contract for account identification. Hylé also ships [a native `hydentity` contract](https://github.com/Hyle-org/hyle/tree/main/contracts/hydentity) for simplicity.
+
+This is a Risc0 example called simple_identity.
 
 ## Prerequisites
 
 - [Install Rust](https://www.rust-lang.org/tools/install) (you'll need `rustup` and Cargo).
 - For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
-- [Start a single-node devnet](https://docs.hyle.eu/developers/quickstart/devnet/). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
+- [Start a single-node devnet](./devnet.md). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
 
 ## Quickstart
 
-### Build and register the contract
+### Build and register the identity contract
 
 To build all methods and register the smart contract on the local node [from the source](https://github.com/Hyle-org/examples/blob/simple_erc20/simple-token/host/src/main.rs), run:
 
 ```bash
-cargo run -- register 1000
+cargo run -- register-contract
 ```
 
-The expected output is `📝 Registering new contract simple_token`.
+The expected output is `📝 Registering new contract simple_identity`.
 
-### Transfer tokens
+### Register an account / Sign up
 
-To transfer 2 tokens from `faucet` to `Bob`:
+To register an account with a username (`alice`) and password (`abc123`), execute:
 
-```bash
-cargo run -- transfer faucet.simple_token bob.simple_token 2
+```sh
+cargo run -- register-identity alice.simple_identity abc123
 ```
-
-This command will:
-
-1. Send a blob transaction to transfer 2 tokens from `faucet` to `bob`.
-2. Generate a ZK proof of that transfer.
-3. Send the proof to the devnet.
-
-### Verify settled state
-
-Upon reception of the proof, the node will:
-
-1. Verify the proof
-1. Settle the blob transaction
-1. Update the contract's state
 
 The node's logs will display:
 
 ```bash
 INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
+INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Successfully registered identity for account: alice.simple_identity
 ```
 
-And on the following slot:
+### Verify identity / Login
+
+To verify `alice`'s identity:
 
 ```bash
-INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+cargo run -- verify-identity alice.simple_identity abc123 0
 ```
 
-#### Check onchain balance
+This command will:
 
-Verify onchain balances:
+1. Send a blob transaction to verify `alice`'s identity.
+1. Generate a ZK proof of that identity. It will only be valid once, thus the inclusion of a nonce.
+1. Send the proof to the devnet.
+
+Upon reception of the proof, the node will:
+
+1. Verify the proof.
+1. Settle the blob transaction.
+1. Update the contract's state.
+
+The node's logs will display:
 
 ```bash
-cargo run -- balance faucet.simple_token
-cargo run -- balance bob.simple_token
+INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Identity verified for account: alice.simple_identity
 ```
-
-!!! note
-    In this example, we do not verify the identity of the person who initiates the transaction. We use `.simple_token` as a suffix for the "from" and "to" transfer fields: usually, we'd use the identity scheme as the suffix.
 
 ### Executing the Project Locally in Development Mode
 
