@@ -1,0 +1,12 @@
+[package]
+name = "contract-amm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk" }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
+bincode = { version = "2.0.0-rc.3" }
