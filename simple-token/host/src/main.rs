@@ -89,6 +89,8 @@ async fn main() {
                 .state
                 .into();
 
+            println!("Balances {:?}", &state);
+
             let contract = TokenContract::init(state, "".into());
             let balance = contract.balance_of(&of).unwrap();
             println!("Balance of {}: {}", of, balance);
