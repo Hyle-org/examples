@@ -4,7 +4,7 @@ Welcome to this TicketApp example, this contract shows an example of composition
 
 ## Goal
 
-The goal of this example is to attribute a ticket to a user. To do so, we need a ticket contract (TicketApp) that will check using composition that a valid transfer happened from a user to the ticket account. 
+The goal of this example is to attribute a ticket to a user. To do so, we need a ticket contract (TicketApp) that will check using composition that a valid transfer happened from a user to the ticket account.
 
 ## Quick Start
 
@@ -13,26 +13,30 @@ First, make sure [rustup] is installed. The
 automatically install the correct version.
 
 First let's go to `./simple-token` folder and run:
+
 ```bash
 cargo run -- --contract-name simple-token register 1000
 ```
-On the node's logs, you should see a line like 
+
+On the node's logs, you should see a line like
 
 > 📝 Registering new contract simple_token
 
 You just registered a token contract named simple-token with an initial supply of 1000! Now let's transfer some tokens to our user *bob*.
 
 To send a blob & proof transactions to send 50 tokens to *bob* you can run:
+
 ```bash
 cargo run -- -contract-name simple-token transfer faucet.simple-token bob.ticket-app 50
 cargo run -- -contract-name simple-token transfer faucet.simple-token alice.ticket-app 10
 ```
+
 On node's logs you should see:
 
->  INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-> 
->  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.ticket_app
->  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.ticket_app
+> INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+>
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.ticket_app
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.ticket_app
 
 You can check onchain balance:
 
@@ -43,7 +47,7 @@ cargo run -- --contract-name simple-token balance bob.ticket-app
 cargo run -- --contract-name simple-token balance alice.ticket-app
 ```
 
-Note: The example does not compose with an identity contract, thus no identity verification is made. 
+Note: The example does not compose with an identity contract, thus no identity verification is made.
 This is the reason of the suffix ".simple-token" and ".ticket-app" on the "from" & "to" transfer fields. More info to come in the documentation.
 
 Now *bob* has some tokens, let's buy a ticket.
@@ -101,7 +105,7 @@ RUST_LOG="[executor]=info" RISC0_DEV_MODE=1 cargo run
 <!--BONSAI_API_KEY="YOUR_API_KEY" BONSAI_API_URL="BONSAI_URL" cargo run-->
 <!--```-->
 
-## How to create a project based on this example 
+## How to create a project based on this example
 
 - The [RISC Zero Developer Docs][dev-docs] is a great place to get started.
 - Example projects are available in the [examples folder][examples] of
@@ -150,4 +154,3 @@ project_name
 [risc0-zkvm]: https://docs.rs/risc0-zkvm
 [rust-toolchain]: rust-toolchain.toml
 [rustup]: https://rustup.rs
-[zkvm-overview]: https://dev.risczero.com/zkvm
