@@ -32,6 +32,12 @@ struct Cli {
 
     #[arg(long, default_value = "examples.simple_ticket_app")]
     pub user: String,
+
+    #[arg(long, default_value = "pass")]
+    pub pass: String,
+
+    #[arg(long, default_value = "0")]
+    pub nonce: String,
 }
 
 #[derive(Subcommand)]
@@ -91,14 +97,25 @@ async fn main() {
             println!("Initial State {:?}", &initial_state);
             println!("Initial State {:?}", initial_state.as_digest());
             println!("Identity {:?}", cli.user.clone());
+            println!("Nonce {:?}", cli.nonce.clone());
 
-            // let identity_cf: IdentityAction = IdentityAction::VerifyIdentity {
-            //     account: cli.user.clone().into(),
-            //     nonce: 1,
-            // };
+            let identity = Identity(cli.user.clone());
+
+            let identity_cf: IdentityAction = IdentityAction::VerifyIdentity {
+                account: identity.0.clone(),
+                nonce: cli.nonce.parse().unwrap(),
+            };
+
+            let identity_contract_name = cli.user.rsplit_once(".").unwrap().1.to_string();
 
             let blobs = vec![
-                // identity_cf.as_blob(ContractName("hydentity".to_owned())),
+                sdk::Blob {
+                    contract_name: identity_contract_name.clone().into(),
+                    data: sdk::BlobData(
+                        bincode::encode_to_vec(identity_cf, bincode::config::standard())
+                            .expect("Failed to encode Identity action"),
+                    ),
+                },
                 // Init pair 0 amount
                 sdk::Blob {
                     contract_name: initial_state.ticket_price.0.clone(),
@@ -125,8 +142,10 @@ async fn main() {
                 },
             ];
 
+            println!("Blobs {:?}", blobs.clone());
+
             let blob_tx = BlobTransaction {
-                identity: Identity(cli.user.clone()),
+                identity: identity.clone(),
                 blobs: blobs.clone(),
             };
 
@@ -136,14 +155,16 @@ async fn main() {
 
             // prove tx
 
+            println!("Running and proving TicketApp blob");
+
             // Build the contract input
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
-                identity: cli.user.clone().into(),
-                tx_hash: "".into(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
                 private_blob: sdk::BlobData(vec![]),
                 blobs: blobs.clone(),
-                index: sdk::BlobIndex(1),
+                index: sdk::BlobIndex(2),
             };
 
             // Generate the zk proof
@@ -174,6 +195,8 @@ async fn main() {
                 .unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
 
+            println!("Running and proving Transfer blob");
+
             // Build the transfer a input
             let initial_state_a: Token = client
                 .get_contract(&initial_state.ticket_price.0.clone().into())
@@ -184,11 +207,11 @@ async fn main() {
 
             let inputs = ContractInput {
                 initial_state: initial_state_a.as_digest(),
-                identity: cli.user.clone().into(),
-                tx_hash: "".into(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
                 private_blob: sdk::BlobData(vec![]),
                 blobs: blobs.clone(),
-                index: sdk::BlobIndex(0),
+                index: sdk::BlobIndex(1),
             };
 
             // Generate the zk proof
@@ -207,6 +230,53 @@ async fn main() {
                 tx_hashes: vec![blob_tx_hash.clone()],
                 proof,
                 contract_name: initial_state.ticket_price.0.clone(),
+            };
+
+            // Send the proof transaction
+            let proof_tx_hash = client
+                .send_tx_proof(&proof_tx)
+                .await
+                .unwrap()
+                .text()
+                .await
+                .unwrap();
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+
+            println!("Running and proving Identity blob");
+
+            // Fetch the initial state from the node
+            let initial_state_id: contract_identity::Identity = client
+                .get_contract(&identity_contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            // Build the contract input
+            let inputs = ContractInput {
+                initial_state: initial_state_id.as_digest(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
+                private_blob: sdk::BlobData(cli.pass.into_bytes().to_vec()),
+                blobs: blobs.clone(),
+                index: sdk::BlobIndex(0),
+            };
+
+            // Generate the zk proof
+            let binary = if cli.reproducible {
+                println!("Running with reproducible ELF binary.");
+                std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
+                                .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
+            } else {
+                println!("Running non-reproducibly");
+                methods_identity::GUEST_ELF.to_vec()
+            };
+            let (proof, _) = prove(&binary, &inputs).await.unwrap();
+
+            let proof_tx = ProofTransaction {
+                tx_hashes: vec![blob_tx_hash],
+                proof,
+                contract_name: identity_contract_name.clone().into(),
             };
 
             // Send the proof transaction

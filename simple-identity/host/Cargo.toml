@@ -7,10 +7,10 @@ edition = "2021"
 sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", rev = "47f85d47" }
 client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", rev = "47f85d47" }
 hyle = { git = "https://github.com/hyle-org/hyle", default-features = false, package = "hyle", rev = "47f85d47" }
-contract = { path = "../contract", package = "contract"}
+contract-identity = { path = "../contract" }
 
 # hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }
-methods = { path = "../methods" }
+methods-identity = { path = "../methods" }
 risc0-zkvm = { version = "1.2.0" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = "1.0"

@@ -135,7 +135,7 @@ async fn main() {
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
                 identity: from.clone().into(),
-                tx_hash: "".into(),
+                tx_hash: blob_tx_hash.clone().into(),
                 private_blob: sdk::BlobData(vec![]),
                 blobs: blobs.clone(),
                 index: sdk::BlobIndex(0),

@@ -20,8 +20,8 @@ fn main() {
         .clone();
 
     let transfer_action =
-        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(0));
-    let transfer_action_contract_name = input.blobs.get(0).unwrap().contract_name.clone();
+        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(1));
+    let transfer_action_contract_name = input.blobs.get(1).unwrap().contract_name.clone();
 
     let ticket_app_state = input
         .initial_state

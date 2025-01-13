@@ -1,4 +1,4 @@
-use contract::Identity;
+use contract_identity::Identity;
 use sdk::identity_provider::IdentityAction;
 
 use core::str::from_utf8;

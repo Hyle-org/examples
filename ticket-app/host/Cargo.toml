@@ -8,9 +8,11 @@ sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk" 
 client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk" }
 hyle = { git = "https://github.com/hyle-org/hyle", default-features = false, package = "hyle" }
 contract-ticket-app = { path = "../contract", package = "contract-ticket-app"}
+contract-identity = { path = "../../simple-identity/contract"}
 contract = { path = "../../simple-token/contract", package = "contract"}
 
 # hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }
+methods-identity = { path = "../../simple-identity/methods" }
 methods-ticket-app = { path = "../methods" }
 methods = { path = "../../simple-token/methods" }
 risc0-zkvm = { version = "1.2.0" }
