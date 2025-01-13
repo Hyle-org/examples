@@ -14,6 +14,41 @@ The goal of this example is to attribute a ticket to a user. To do so, we need a
 
 ## Quick Start
 
+### User minting, Bob's origins
+
+First let's create an identity contract to declare a user we will use to buy a ticket.
+
+Go to `./simple-identity` folder and run:
+
+```bash
+cargo run -- --contract-name id register-contract
+```
+
+Now we have an identity contract called `id` we can use to declare a user. Let's declare one!
+
+```bash
+cargo run -- --contract-name id register-identity bob.id pass
+cargo run -- --contract-name id register-identity alice.id pass
+```
+
+We now have a user called *bob* on the contract `id`. We can refer to it with `bob.id`. His password is `pass`. Same for *alice*.
+
+Let's verify it quickly with:
+
+```bash
+cargo run -- --contract-name id verify bob.id pass 0
+```
+
+`0` is the nonce. Every time we verify successfully *bob*'s identity, it increments. Now if we want to verify it again, we should use `1` as nonce.
+And for *alice*:
+
+```bash
+cargo run -- --contract-name id verify alice.id pass 0
+```
+
+### Filling Bob's and Alice's bag
+
+
 Go to `./simple-token` folder and run:
 
 ```bash
@@ -26,33 +61,28 @@ On the node's logs, you will see:
 
 You just registered a token contract named simple-token with an initial supply of 1000. Now let's transfer some tokens to our user *bob*.
 
-To send 50 tokens to *bob* and 10 tokens to *alice*, run:
+To send `50` tokens to *bob* and `10` to *alice*
 
 ```bash
-cargo run -- -contract-name simple-token transfer faucet.simple-token bob.ticket-app 50
-cargo run -- -contract-name simple-token transfer faucet.simple-token alice.ticket-app 10
+cargo run -- -contract-name simple-token transfer faucet.simple-token bob.id 50
+cargo run -- -contract-name simple-token transfer faucet.simple-token alice.id 10
 ```
 
 The node's log will show:
 
 > INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
 >
-> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.ticket_app
-> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.ticket_app
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.id
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.id
 
 Check onchain balance:
 
 ```bash
 cargo run -- --contract-name simple-token balance faucet.simple-token
 
-cargo run -- --contract-name simple-token balance bob.ticket-app
-cargo run -- --contract-name simple-token balance alice.ticket-app
+cargo run -- --contract-name simple-token balance bob.id
+cargo run -- --contract-name simple-token balance alice.id
 ```
-
-!!! note
-    The example does not compose with an identity contract, thus no identity verification is made.
-    This is the reason for the suffix ".simple-token" and ".ticket-app" on the "from" & "to" transfer fields.
-    More info to come in the documentation.
 
 Now that *bob* has some tokens, let's buy him a ticket.
 
@@ -62,26 +92,26 @@ Register the ticket app by going to `./ticket-app` folder and running:
 cargo run -- --contract-name ticket-app register simple-token 15
 ```
 
-Our ticket app is called ticket-app, and sells a ticket for 15 simple-token.
+Our ticket app is called `ticket-app`, and sells a ticket for `15` simple-token.
 
 Let's buy a ticket for *bob*:
 
 ```bash
-cargo run -- --contract-name ticket-app --user bob.ticket-app buy-ticket
+cargo run -- --contract-name ticket-app --user bob.id --pass pass --nonce 1 buy-ticket
 ```
 
 Check that *bob* has a ticket:
 
 ```bash
-cargo run -- --contract-name ticket-app --user bob.ticket-app has-ticket
+cargo run -- --contract-name ticket-app --user bob.id has-ticket
 ```
 
-You can also check Bob's balance and see he now has 35 tokens.
+You can also check Bob's balance and see he now has `35` tokens.
 
 Let's try with *alice*:
 
 ```bash
-cargo run -- --contract-name ticket-app --user alice.ticket-app buy-ticket
+cargo run -- --contract-name ticket-app --user alice.id buy-ticket
 ```
 
 You will get an error while executing the TicketApp program: `Execution failed ! Program output: Insufficient balance`. This is because Alice has a balance of 10 and the ticket costs 15.
