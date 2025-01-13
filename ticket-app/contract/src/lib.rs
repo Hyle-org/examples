@@ -13,7 +13,7 @@ pub struct TicketAppContract {
 #[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode, Default)]
 pub struct TicketAppState {
     pub ticket_price: (ContractName, u128),
-    tickets: Vec<Identity>,
+    pub tickets: Vec<Identity>,
 }
 
 impl TicketAppState {

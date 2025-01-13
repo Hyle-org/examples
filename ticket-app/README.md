@@ -1,6 +1,10 @@
-# Simple Token transfer risc0 example
+# TicketApp/SimpleToken composition example
 
-Welcome to the simple_token risc0 example, this is a simple contract to get started with.
+Welcome to this TicketApp example, this contract shows an example of composition on Hylé.
+
+## Goal
+
+The goal of this example is to attribute a ticket to a user. To do so, we need a ticket contract (TicketApp) that will check using composition that a valid transfer happened from a user to the ticket account. 
 
 ## Quick Start
 
@@ -8,49 +12,71 @@ First, make sure [rustup] is installed. The
 [`rust-toolchain.toml`][rust-toolchain] file will be used by `cargo` to
 automatically install the correct version.
 
-To build all methods and register the smart contract on the local node, run:
+First let's go to `./simple-token` folder and run:
 ```bash
-cargo run -- register 1000
+cargo run -- --contract-name simple-token register 1000
 ```
 On the node's logs, you should see a line like 
 
 > 📝 Registering new contract simple_token
 
-To send a blob & proof transactions to send 2 token to *bob* you can run:
+You just registered a token contract named simple-token with an initial supply of 1000! Now let's transfer some tokens to our user *bob*.
+
+To send a blob & proof transactions to send 50 tokens to *bob* you can run:
 ```bash
-cargo run -- transfer faucet.simple_token bob.simple_token 2
+cargo run -- -contract-name simple-token transfer faucet.simple-token bob.ticket-app 50
+cargo run -- -contract-name simple-token transfer faucet.simple-token alice.ticket-app 10
 ```
-
-This will 
-- send a Blob transaction to transfer 2 token from faucet to bob
-- Generate a zk proof
-- Send the proof 
-
-The node will 
-- verify the proof 
-- settle the blob transaction
-- Update the contract state 
-
 On node's logs you should see:
 
 >  INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
 > 
->  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
-
-And after a slot: 
-
->   INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+>  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.ticket_app
+>  INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.ticket_app
 
 You can check onchain balance:
 
 ```bash
-cargo run -- balance faucet.simple_token
+cargo run -- --contract-name simple-token balance faucet.simple-token
 
-cargo run -- balance bob.simple_token
+cargo run -- --contract-name simple-token balance bob.ticket-app
+cargo run -- --contract-name simple-token balance alice.ticket-app
 ```
 
 Note: The example does not compose with an identity contract, thus no identity verification is made. 
-This is the reason of the suffix ".simple_token" on the "from" & "to" transfer fields. More info to come in the documentation.
+This is the reason of the suffix ".simple-token" and ".ticket-app" on the "from" & "to" transfer fields. More info to come in the documentation.
+
+Now *bob* has some tokens, let's buy a ticket.
+
+Let's register the ticket app, to do so, go to `./ticket-app` folder and run:
+
+```bash
+cargo run -- --contract-name ticket-app register simple-token 15
+```
+
+Our ticket app is called ticket_app, and sells a ticket for 15 simple-token.
+
+Let's buy a ticket to *bob*
+
+```bash
+cargo run -- --contract-name ticket-app --user bob.ticket-app buy-ticket
+```
+
+Now check *bob* has a ticket
+
+```bash
+cargo run -- --contract-name ticket-app --user bob.ticket-app has-ticket
+```
+
+You can check his balance and see it has been debited (should be 35 now).
+
+Let's try with *alice*
+
+```bash
+cargo run -- --contract-name ticket-app --user alice.ticket-app buy-ticket
+```
+
+You should get an error while executing the TicketApp program `Execution failed ! Program output: Insufficient balance` since Alice has a balance of 10 and the ticket costs 15.
 
 ### Executing the Project Locally in Development Mode
 
