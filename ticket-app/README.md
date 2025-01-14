@@ -1,8 +1,10 @@
-# Simple Identity risc0 example
+# TicketApp/SimpleToken composition example
 
-On Hylé, any smart contract can serve as proof of identity. This flexibility allows you to register your preferred identity source as a smart contract for account identification. Hylé also ships [a native `hydentity` contract](https://github.com/Hyle-org/hyle/tree/main/contracts/hydentity) for simplicity.
+Welcome to this TicketApp example, this contract shows an example of composition on Hylé.
 
-This is a Risc0 example called simple_identity.
+## Goal
+
+The goal of this example is to attribute a ticket to a user. To do so, we need a ticket contract (TicketApp) that will check using composition that a valid transfer happened from a user to the ticket account.
 
 ## Prerequisites
 
@@ -10,59 +12,109 @@ This is a Risc0 example called simple_identity.
 - For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
 - [Start a single-node devnet](https://docs.hyle.eu/developers/quickstart/devnet/). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
 
-## Quickstart
+## Quick Start
 
-### Build and register the identity contract
+### User minting, Bob's origins
 
-To build all methods and register the smart contract on the local node [from the source](https://github.com/Hyle-org/examples/blob/simple_erc20/simple-token/host/src/main.rs), run:
+First let's create an identity contract to declare a user we will use to buy a ticket.
 
-```bash
-cargo run -- register-contract
-```
-
-The expected output is `📝 Registering new contract simple_identity`.
-
-### Register an account / Sign up
-
-To register an account with a username (`alice`) and password (`abc123`), execute:
-
-```sh
-cargo run -- register-identity alice.simple_identity abc123
-```
-
-The node's logs will display:
+Go to `./simple-identity` folder and run:
 
 ```bash
-INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Successfully registered identity for account: alice.simple_identity
+cargo run -- --contract-name id register-contract
 ```
 
-### Verify identity / Login
-
-To verify `alice`'s identity:
+Now we have an identity contract called `id` we can use to declare a user. Let's declare one!
 
 ```bash
-cargo run -- verify-identity alice.simple_identity abc123 0
+cargo run -- --contract-name id register-identity bob.id pass
+cargo run -- --contract-name id register-identity alice.id pass
 ```
 
-This command will:
+We now have a user called *bob* on the contract `id`. We can refer to it with `bob.id`. His password is `pass`. Same for *alice*.
 
-1. Send a blob transaction to verify `alice`'s identity.
-1. Generate a ZK proof of that identity. It will only be valid once, thus the inclusion of a nonce.
-1. Send the proof to the devnet.
-
-Upon reception of the proof, the node will:
-
-1. Verify the proof.
-1. Settle the blob transaction.
-1. Update the contract's state.
-
-The node's logs will display:
+Let's verify it quickly with:
 
 ```bash
-INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Identity verified for account: alice.simple_identity
+cargo run -- --contract-name id verify bob.id pass 0
 ```
+
+`0` is the nonce. Every time we verify successfully *bob*'s identity, it increments. Now if we want to verify it again, we should use `1` as nonce.
+And for *alice*:
+
+```bash
+cargo run -- --contract-name id verify alice.id pass 0
+```
+
+### Filling Bob's and Alice's bag
+
+
+Go to `./simple-token` folder and run:
+
+```bash
+cargo run -- --contract-name simple-token register 1000
+```
+
+On the node's logs, you will see:
+
+> 📝 Registering new contract simple_token
+
+You just registered a token contract named simple-token with an initial supply of 1000. Now let's transfer some tokens to our user *bob*.
+
+To send `50` tokens to *bob* and `10` to *alice*
+
+```bash
+cargo run -- -contract-name simple-token transfer faucet.simple-token bob.id 50
+cargo run -- -contract-name simple-token transfer faucet.simple-token alice.id 10
+```
+
+The node's log will show:
+
+> INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+>
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.id
+> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.id
+
+Check onchain balance:
+
+```bash
+cargo run -- --contract-name simple-token balance faucet.simple-token
+
+cargo run -- --contract-name simple-token balance bob.id
+cargo run -- --contract-name simple-token balance alice.id
+```
+
+Now that *bob* has some tokens, let's buy him a ticket.
+
+Register the ticket app by going to `./ticket-app` folder and running:
+
+```bash
+cargo run -- --contract-name ticket-app register simple-token 15
+```
+
+Our ticket app is called `ticket-app`, and sells a ticket for `15` simple-token.
+
+Let's buy a ticket for *bob*:
+
+```bash
+cargo run -- --contract-name ticket-app --user bob.id --pass pass --nonce 1 buy-ticket
+```
+
+Check that *bob* has a ticket:
+
+```bash
+cargo run -- --contract-name ticket-app --user bob.id has-ticket
+```
+
+You can also check Bob's balance and see he now has `35` tokens.
+
+Let's try with *alice*:
+
+```bash
+cargo run -- --contract-name ticket-app --user alice.id buy-ticket
+```
+
+You will get an error while executing the TicketApp program: `Execution failed ! Program output: Insufficient balance`. This is because Alice has a balance of 10 and the ticket costs 15.
 
 ### Executing the Project Locally in Development Mode
 
@@ -136,4 +188,3 @@ project_name
 [risc0-zkvm]: https://docs.rs/risc0-zkvm
 [rust-toolchain]: rust-toolchain.toml
 [rustup]: https://rustup.rs
-[zkvm-overview]: https://dev.risczero.com/zkvm
