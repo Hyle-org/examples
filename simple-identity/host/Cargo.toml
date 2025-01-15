@@ -6,10 +6,10 @@ edition = "2021"
 [dependencies]
 sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch = "api_clients" }
 client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", features = ["rest", "risc0"], branch = "api_clients" }
-contract = { path = "../contract", package = "contract"}
+contract-identity = { path = "../contract" }
 
 # hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }
-methods = { path = "../methods" }
+methods-identity = { path = "../methods" }
 risc0-zkvm = { version = "1.2.0" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = "1.0"

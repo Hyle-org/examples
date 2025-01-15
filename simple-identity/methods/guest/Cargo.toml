@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", features = ["risc0"], branch = "api_clients" }
 risc0-zkvm = { version = "1.2.0", default-features = false, features = ['std'] }
-contract = { path = "../../contract", package = "contract"}
+contract-identity = { path = "../../contract"}

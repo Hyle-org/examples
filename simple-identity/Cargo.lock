@@ -689,7 +689,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
-name = "contract"
+name = "contract-identity"
 version = "0.1.0"
 dependencies = [
  "bincode 2.0.0-rc.3",
@@ -1165,10 +1165,10 @@ dependencies = [
  "borsh",
  "clap",
  "client-sdk",
- "contract",
+ "contract-identity",
  "hex",
  "hyle-contract-sdk",
- "methods",
+ "methods-identity",
  "reqwest",
  "risc0-zkvm",
  "serde",
@@ -1707,7 +1707,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "methods"
+name = "methods-identity"
 version = "0.1.0"
 dependencies = [
  "risc0-build",

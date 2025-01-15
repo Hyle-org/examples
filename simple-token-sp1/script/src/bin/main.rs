@@ -158,9 +158,6 @@ async fn main() -> anyhow::Result<()> {
                 contract_name: contract_name.clone().into(),
             };
 
-            println!("proof_tx: {:#?}", proof_tx);
-            serde_json::to_writer(std::fs::File::create("proof_tx.json")?, &proof_tx)?;
-
             // Send the proof transaction
             let proof_tx_hash = client
                 .send_tx_proof(&proof_tx)
