@@ -2,11 +2,11 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use contract::Token;
 use contract::TokenContract;
-use hyle::model::BlobTransaction;
-use hyle::model::ProofTransaction;
-use hyle::model::RegisterContractTransaction;
 use sdk::erc20::ERC20;
+use sdk::BlobTransaction;
 use sdk::ContractAction;
+use sdk::ProofTransaction;
+use sdk::RegisterContractTransaction;
 use sdk::{ContractInput, Digestable};
 
 use sp1_sdk::{include_elf, ProverClient};
@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
 
     let cli = Cli::parse();
 
-    let client = hyle::tools::rest_api_client::NodeApiHttpClient::new(cli.host);
+    let client = client_sdk::rest_client::NodeApiHttpClient::new(cli.host)?;
 
     let contract_name = &cli.contract_name;
 
@@ -140,7 +140,7 @@ async fn main() -> anyhow::Result<()> {
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
                 identity: from.clone().into(),
-                tx_hash: "".into(),
+                tx_hash: blob_tx_hash,
                 private_blob: sdk::BlobData(vec![]),
                 blobs: blobs.clone(),
                 index: sdk::BlobIndex(0),
@@ -151,11 +151,9 @@ async fn main() -> anyhow::Result<()> {
             // Generate the zk proof
             println!("🔍 Proving state transition...");
             let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs)
-                .await
                 .context("failed to prove")?;
 
             let proof_tx = ProofTransaction {
-                tx_hashes: vec![blob_tx_hash],
                 proof,
                 contract_name: contract_name.clone().into(),
             };
