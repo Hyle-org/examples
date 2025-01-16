@@ -7,6 +7,6 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch = "api_clients" }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch = "main" }
 
 

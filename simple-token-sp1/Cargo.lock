@@ -220,9 +220,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-rlp"
-version = "0.3.10"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f542548a609dca89fcd72b3b9f355928cf844d4363c5eed9c5273a3dd225e097"
+checksum = "3d6c1d995bff8d011f7cd6c81820d51825e6e06d6db73914c1630ecf544d83d6"
 dependencies = [
  "alloy-rlp-derive",
  "arrayvec",
@@ -231,9 +231,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-rlp-derive"
-version = "0.3.10"
+version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a833d97bf8a5f0f878daf2c8451fff7de7f9de38baa5a45d936ec718d81255a"
+checksum = "a40e1ef334153322fd878d07e86af7a529bcb86b2439525920a88eba87bcf943"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1118,7 +1118,7 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 [[package]]
 name = "client-sdk"
 version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?branch=api_clients#6e1e2adb4b9812581a562887693822454dacec44"
+source = "git+https://github.com/hyle-org/hyle?branch=main#43fc10f8b7698d0c8b6b2b4cdab5fd639c96eb39"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.3",
@@ -2104,7 +2104,7 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 [[package]]
 name = "hyle-contract-sdk"
 version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?branch=api_clients#6e1e2adb4b9812581a562887693822454dacec44"
+source = "git+https://github.com/hyle-org/hyle?branch=main#43fc10f8b7698d0c8b6b2b4cdab5fd639c96eb39"
 dependencies = [
  "anyhow",
  "bincode 2.0.0-rc.3",
@@ -2116,7 +2116,7 @@ dependencies = [
 [[package]]
 name = "hyle-model"
 version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?branch=api_clients#6e1e2adb4b9812581a562887693822454dacec44"
+source = "git+https://github.com/hyle-org/hyle?branch=main#43fc10f8b7698d0c8b6b2b4cdab5fd639c96eb39"
 dependencies = [
  "anyhow",
  "base64",
