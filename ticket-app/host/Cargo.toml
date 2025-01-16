@@ -4,14 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk" }
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk" }
-hyle = { git = "https://github.com/hyle-org/hyle", default-features = false, package = "hyle" }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch="main" }
+client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", features = ["risc0", "rest"], branch="main" }
 contract-ticket-app = { path = "../contract", package = "contract-ticket-app"}
 contract-identity = { path = "../../simple-identity/contract"}
 contract = { path = "../../simple-token/contract", package = "contract"}
 
-# hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }
 methods-identity = { path = "../../simple-identity/methods" }
 methods-ticket-app = { path = "../methods" }
 methods = { path = "../../simple-token/methods" }

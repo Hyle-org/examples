@@ -3,7 +3,6 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use contract_ticket_app::{TicketAppAction, TicketAppContract};
 use sdk::erc20::ERC20Action;
 use sdk::BlobIndex;
