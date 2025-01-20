@@ -1,18 +1,16 @@
-use contract::{Token, TokenContract};
-use sdk::erc20::ERC20Action;
+#![no_main]
+#![no_std]
+
+extern crate alloc;
+
+use sdk::guest::GuestEnv;
+use sdk::guest::Risc0Env;
+
+use contract::execute;
+
+risc0_zkvm::guest::entry!(main);
 
 fn main() {
-    // Parse contract inputs
-    let (input, action) = sdk::guest::init_raw::<ERC20Action>();
-
-    // Parse initial state as Token
-    let state: Token = input.initial_state.clone().into();
-
-    // Execute the given action
-    let mut contract = TokenContract::init(state, input.identity.clone());
-    let execution_result = sdk::erc20::execute_action(&mut contract, action);
-    let new_state = contract.state();
-
-    // Commit the result
-    sdk::guest::commit(input, new_state, execution_result);
+    let env = Risc0Env {};
+    env.commit(&execute(env.read()));
 }

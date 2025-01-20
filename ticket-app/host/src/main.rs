@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
-use client_sdk::helpers::risc0::prove;
-use contract::Token;
+use client_sdk::helpers::risc0::Risc0Prover;
+use contract::TokenContractState;
 use contract_ticket_app::TicketAppAction;
 use contract_ticket_app::TicketAppState;
 use sdk::BlobTransaction;
@@ -60,6 +60,10 @@ async fn main() {
 
     let contract_name = &cli.contract_name.clone();
 
+    let ticket_prover = Risc0Prover::new(methods_ticket_app::GUEST_ELF);
+    let identity_prover = Risc0Prover::new(methods_identity::GUEST_ELF);
+    let token_prover = Risc0Prover::new(methods::GUEST_ELF);
+
     match cli.command {
         Commands::Register { token, price } => {
             // Build initial state of contract
@@ -77,9 +81,6 @@ async fn main() {
             };
             let res = client
                 .send_tx_register_contract(&register_tx)
-                .await
-                .unwrap()
-                .text()
                 .await
                 .unwrap();
 
@@ -169,15 +170,7 @@ async fn main() {
 
             // Generate the zk proof
             //
-            let binary = if cli.reproducible {
-                println!("Running with reproducible ELF binary.");
-                std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                      .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-            } else {
-                println!("Running non-reproducibly");
-                methods_ticket_app::GUEST_ELF.to_vec()
-            };
-            let (proof, _) = prove(&binary, &inputs).await.unwrap();
+            let proof = ticket_prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
@@ -185,19 +178,13 @@ async fn main() {
             };
 
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
 
             println!("Running and proving Transfer blob");
 
             // Build the transfer a input
-            let initial_state_a: Token = client
+            let initial_state_a: TokenContractState = client
                 .get_contract(&initial_state.ticket_price.0.clone().into())
                 .await
                 .unwrap()
@@ -214,16 +201,7 @@ async fn main() {
             };
 
             // Generate the zk proof
-            //
-            let binary = if cli.reproducible {
-                println!("Running with reproducible ELF binary.");
-                std::fs::read("../../simple-token/host/target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                      .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-            } else {
-                println!("Running non-reproducibly");
-                methods::GUEST_ELF.to_vec()
-            };
-            let (proof, _) = prove(&binary, &inputs).await.unwrap();
+            let proof = token_prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
@@ -231,19 +209,13 @@ async fn main() {
             };
 
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
 
             println!("Running and proving Identity blob");
 
             // Fetch the initial state from the node
-            let initial_state_id: contract_identity::Identity = client
+            let initial_state_id: contract_identity::IdentityContractState = client
                 .get_contract(&identity_contract_name.clone().into())
                 .await
                 .unwrap()
@@ -261,15 +233,7 @@ async fn main() {
             };
 
             // Generate the zk proof
-            let binary = if cli.reproducible {
-                println!("Running with reproducible ELF binary.");
-                std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                                .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-            } else {
-                println!("Running non-reproducibly");
-                methods_identity::GUEST_ELF.to_vec()
-            };
-            let (proof, _) = prove(&binary, &inputs).await.unwrap();
+            let proof = identity_prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
@@ -277,13 +241,7 @@ async fn main() {
             };
 
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
         Commands::HasTicket {} => {

@@ -1,7 +1,7 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use contract::Token;
 use contract::TokenContract;
+use contract::TokenContractState;
 use sdk::erc20::ERC20;
 use sdk::BlobTransaction;
 use sdk::ContractAction;
@@ -59,7 +59,8 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Register { supply } => {
             // Build initial state of contract
-            let initial_state = Token::new(supply, format!("faucet.{}", contract_name));
+            let initial_state =
+                TokenContractState::new(supply, format!("faucet.{}", contract_name));
             println!("Initial state: {:?}", initial_state);
 
             let prover_client = ProverClient::from_env();
@@ -78,16 +79,13 @@ async fn main() -> anyhow::Result<()> {
             let res = client
                 .send_tx_register_contract(&register_tx)
                 .await
-                .context("failed to send tx")?
-                .text()
-                .await
-                .context("failed to parse response")?;
+                .context("failed to send tx")?;
 
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
         Commands::Balance { of } => {
             // Fetch the state from the node
-            let state: Token = client
+            let state: TokenContractState = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .context("failed to get contract")?
@@ -103,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::Transfer { from, to, amount } => {
             // Fetch the initial state from the node
-            let initial_state: Token = client
+            let initial_state: TokenContractState = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .context("failed to get contract")?
@@ -162,47 +160,9 @@ async fn main() -> anyhow::Result<()> {
             let proof_tx_hash = client
                 .send_tx_proof(&proof_tx)
                 .await
-                .context("failed to send proof")?
-                .text()
-                .await
-                .context("failed to parse response")?;
+                .context("failed to send proof")?;
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
     };
     Ok(())
 }
-
-//pub async fn prove(
-//    binary: &[u8],
-//    contract_input: &ContractInput,
-//) -> anyhow::Result<(ProofData, HyleOutput)> {
-//    let client = ProverClient::from_env();
-//
-//    // Setup the inputs.
-//    let mut stdin = SP1Stdin::new();
-//    stdin.write(&contract_input);
-//
-//    // Setup the program for proving.
-//    let (pk, _vk) = client.setup(binary);
-//
-//    // Generate the proof
-//    let proof = client
-//        .prove(&pk, &stdin)
-//        //.compressed()
-//        .run()
-//        .expect("failed to generate proof");
-//
-//    let hyle_output = bincode::deserialize::<HyleOutput>(proof.public_values.as_slice())
-//        .context("Failed to extract HyleOuput from SP1 proof")?;
-//
-//    if !hyle_output.success {
-//        let program_error = std::str::from_utf8(&hyle_output.program_outputs).unwrap();
-//        anyhow::bail!(
-//            "\x1b[91mExecution failed ! Program output: {}\x1b[0m",
-//            program_error
-//        );
-//    }
-//
-//    let encoded_receipt = bincode::serialize(&proof)?;
-//    Ok((ProofData::Bytes(encoded_receipt), hyle_output))
-//}

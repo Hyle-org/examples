@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
-use client_sdk::helpers::risc0::prove;
-use contract_identity::Identity;
+use client_sdk::helpers::risc0::Risc0Prover;
+use contract_identity::IdentityContractState;
 use sdk::BlobTransaction;
 use sdk::ProofTransaction;
 use sdk::RegisterContractTransaction;
@@ -54,10 +54,12 @@ async fn main() {
 
     let contract_name = &cli.contract_name;
 
+    let prover = Risc0Prover::new(GUEST_ELF);
+
     match cli.command {
         Commands::RegisterContract {} => {
             // Build initial state of contract
-            let initial_state = Identity::new();
+            let initial_state = IdentityContractState::new();
             println!("Initial state: {:?}", initial_state);
 
             // Send the transaction to register the contract
@@ -71,16 +73,13 @@ async fn main() {
             let res = client
                 .send_tx_register_contract(&register_tx)
                 .await
-                .unwrap()
-                .text()
-                .await
                 .unwrap();
 
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
         Commands::RegisterIdentity { identity, password } => {
             // Fetch the initial state from the node
-            let initial_state: Identity = client
+            let initial_state: IdentityContractState = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .unwrap()
@@ -127,15 +126,7 @@ async fn main() {
             };
 
             // Generate the zk proof
-            let binary = if cli.reproducible {
-                println!("Running with reproducible ELF binary.");
-                std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                            .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-            } else {
-                println!("Running non-reproducibly");
-                GUEST_ELF.to_vec()
-            };
-            let (proof, _) = prove(&binary, &inputs).await.unwrap();
+            let proof = prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
@@ -143,13 +134,7 @@ async fn main() {
             };
 
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
         Commands::VerifyIdentity {
@@ -159,7 +144,7 @@ async fn main() {
         } => {
             {
                 // Fetch the initial state from the node
-                let initial_state: Identity = client
+                let initial_state: IdentityContractState = client
                     .get_contract(&contract_name.clone().into())
                     .await
                     .unwrap()
@@ -204,15 +189,7 @@ async fn main() {
                 };
 
                 // Generate the zk proof
-                let binary = if cli.reproducible {
-                    println!("Running with reproducible ELF binary.");
-                    std::fs::read("target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                                .expect("Could not read ELF binary at target/riscv-guest/riscv32im-risc0-zkvm-elf/docker/method/method")
-                } else {
-                    println!("Running non-reproducibly");
-                    GUEST_ELF.to_vec()
-                };
-                let (proof, _) = prove(&binary, &inputs).await.unwrap();
+                let proof = prover.prove(inputs).await.unwrap();
 
                 let proof_tx = ProofTransaction {
                     proof,
@@ -220,13 +197,7 @@ async fn main() {
                 };
 
                 // Send the proof transaction
-                let proof_tx_hash = client
-                    .send_tx_proof(&proof_tx)
-                    .await
-                    .unwrap()
-                    .text()
-                    .await
-                    .unwrap();
+                let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
                 println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
             }
         }
