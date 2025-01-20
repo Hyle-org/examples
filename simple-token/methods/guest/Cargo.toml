@@ -6,6 +6,7 @@ edition = "2021"
 [workspace]
 
 [dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", features = ["risc0"], branch="main" }
-risc0-zkvm = { version = "1.2.0", default-features = false, features = ['std'] }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", features = ["risc0"], tag = "v0.7.1" }
 contract = { path = "../../contract", package = "contract"}
+
+risc0-zkvm = { version = "1.2.1", default-features = false, features = ['std'] }

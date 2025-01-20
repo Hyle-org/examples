@@ -12,9 +12,10 @@ path = "src/bin/main.rs"
 sp1-sdk = "4.0.0"
 
 sdk = { workspace = true }
+client-sdk = { workspace = true, features = ["sp1", "rest"] }
+
 contract = { path = "../lib", package = "contract"}
 
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", features = ["sp1", "rest"], branch = "main"  }
 
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde = "1.0"

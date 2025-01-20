@@ -1,15 +1,58 @@
 use bincode::{Decode, Encode};
-use sdk::ContractName;
-use sdk::{erc20::ERC20Action, Identity};
-use sdk::{Digestable, RunResult};
 use serde::{Deserialize, Serialize};
 
+use sdk::{
+    erc20::ERC20Action, BlobIndex, ContractName, Digestable, HyleOutput, Identity, RunResult,
+};
+
+/// Entry point of the contract's logic
+pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
+    let (input, ticket_app_action) = sdk::guest::init_raw::<TicketAppAction>(contract_input);
+    let ticket_app_contract_name = input
+        .blobs
+        .get(input.index.0)
+        .unwrap()
+        .contract_name
+        .clone();
+
+    let transfer_action =
+        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(1));
+
+    let transfer_action_contract_name = input.blobs.get(1).unwrap().contract_name.clone();
+
+    let ticket_app_state = input.initial_state.clone().into();
+
+    let mut ticket_app_contract = TicketAppContract::new(
+        input.identity.clone(),
+        ticket_app_contract_name,
+        ticket_app_state,
+    );
+
+    let res = match ticket_app_action {
+        TicketAppAction::BuyTicket {} => {
+            ticket_app_contract.buy_ticket(transfer_action, transfer_action_contract_name)
+        }
+        TicketAppAction::HasTicket {} => ticket_app_contract.has_ticket(),
+    };
+
+    sdk::utils::as_hyle_output(input, ticket_app_contract.state, res)
+}
+
+/// Enum representing the actions that can be performed by the Amm contract.
+#[derive(Encode, Decode, Debug, Clone)]
+pub enum TicketAppAction {
+    BuyTicket {},
+    HasTicket {},
+}
+
+/// A struct that holds the logic of the contract
 pub struct TicketAppContract {
     identity: Identity,
     contract_name: ContractName,
     pub state: TicketAppState,
 }
 
+/// The state of the contract, that is totally serialized on-chain
 #[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode, Default)]
 pub struct TicketAppState {
     pub ticket_price: (ContractName, u128),
@@ -90,6 +133,9 @@ impl TicketAppContract {
     }
 }
 
+/// Helpers to transform the contrat's state in its on-chain state digest version.
+/// In an optimal version, you would here only returns a hash of the state,
+/// while storing the full-state off-chain
 impl Digestable for TicketAppState {
     fn as_digest(&self) -> sdk::StateDigest {
         sdk::StateDigest(
@@ -105,11 +151,4 @@ impl From<sdk::StateDigest> for TicketAppState {
                 .expect("Could not decode TicketAppState");
         ticket_app_state
     }
-}
-
-/// Enum representing the actions that can be performed by the Amm contract.
-#[derive(Encode, Decode, Debug, Clone)]
-pub enum TicketAppAction {
-    BuyTicket {},
-    HasTicket {},
 }

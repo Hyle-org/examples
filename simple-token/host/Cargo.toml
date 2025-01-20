@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", branch="main" }
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", features = ["rest", "risc0"], branch="main" }
+sdk = { workspace = true }
+client-sdk = { workspace = true, features = ["rest", "risc0"] }
 contract = { path = "../contract", package = "contract"}
 
 # hyle = { git = "https://github.com/hyle-org/hyle", branch = "generic_tx_builder", package = "hyle" }

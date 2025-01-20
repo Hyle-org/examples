@@ -3,42 +3,58 @@ use std::collections::BTreeMap;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use sdk::{identity_provider::IdentityVerification, Digestable};
+use sdk::{identity_provider::IdentityVerification, Digestable, HyleOutput};
 use sha2::{Digest, Sha256};
 
+/// Entry point of the contract's logic
+pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
+    // Parse contract inputs
+    let (input, action) =
+        sdk::guest::init_raw::<sdk::identity_provider::IdentityAction>(contract_input);
+
+    // Parse initial state
+    let mut state: IdentityContractState = input.initial_state.clone().into();
+
+    // Extract private information
+    let password = core::str::from_utf8(&input.private_blob.0).unwrap();
+
+    // Execute the given action
+    let res = sdk::identity_provider::execute_action(&mut state, action, password);
+
+    sdk::utils::as_hyle_output(input, state, res)
+}
+
+/// Struct to hold account's information
 #[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct AccountInfo {
     pub hash: String,
     pub nonce: u32,
 }
 
+/// The state of the contract, that is totally serialized on-chain
 #[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone)]
-pub struct Identity {
+pub struct IdentityContractState {
     identities: BTreeMap<String, AccountInfo>,
 }
 
-impl Identity {
+/// Some helper methods for the state
+impl IdentityContractState {
     pub fn new() -> Self {
-        Identity {
+        IdentityContractState {
             identities: BTreeMap::new(),
         }
     }
 
     pub fn get_nonce(&self, username: &str) -> Result<u32, &'static str> {
-        let info = self.get_identity_info(username)?;
-        let state: AccountInfo =
-            serde_json::from_str(&info).map_err(|_| "Failed to parse account info")?;
-        Ok(state.nonce)
+        let info = self.identities.get(username).ok_or("Identity not found")?;
+        Ok(info.nonce)
     }
 }
 
-impl Default for Identity {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl IdentityVerification for Identity {
+// The IdentityVerification trait is implemented for the IdentityContractState struct
+// This trait is given by the sdk, as a "standard" for identity verification contracts
+// but you could do the same logic without it.
+impl IdentityVerification for IdentityContractState {
     fn register_identity(
         &mut self,
         account: &str,
@@ -96,7 +112,16 @@ impl IdentityVerification for Identity {
     }
 }
 
-impl Digestable for Identity {
+impl Default for IdentityContractState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Helpers to transform the contrat's state in its on-chain state digest version.
+/// In an optimal version, you would here only returns a hash of the state,
+/// while storing the full-state off-chain
+impl Digestable for IdentityContractState {
     fn as_digest(&self) -> sdk::StateDigest {
         sdk::StateDigest(
             bincode::encode_to_vec(self, bincode::config::standard())
@@ -104,7 +129,7 @@ impl Digestable for Identity {
         )
     }
 }
-impl From<sdk::StateDigest> for Identity {
+impl From<sdk::StateDigest> for IdentityContractState {
     fn from(state: sdk::StateDigest) -> Self {
         let (state, _) = bincode::decode_from_slice(&state.0, bincode::config::standard())
             .map_err(|_| "Could not decode identity state".to_string())

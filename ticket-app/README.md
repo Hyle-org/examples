@@ -36,14 +36,14 @@ We now have a user called *bob* on the contract `id`. We can refer to it with `b
 Let's verify it quickly with:
 
 ```bash
-cargo run -- --contract-name id verify bob.id pass 0
+cargo run -- --contract-name id verify-identity bob.id pass 0
 ```
 
 `0` is the nonce. Every time we verify successfully *bob*'s identity, it increments. Now if we want to verify it again, we should use `1` as nonce.
 And for *alice*:
 
 ```bash
-cargo run -- --contract-name id verify alice.id pass 0
+cargo run -- --contract-name id verify-identity alice.id pass 0
 ```
 
 ### Filling Bob's and Alice's bag
@@ -64,8 +64,8 @@ You just registered a token contract named simple-token with an initial supply o
 To send `50` tokens to *bob* and `10` to *alice*
 
 ```bash
-cargo run -- -contract-name simple-token transfer faucet.simple-token bob.id 50
-cargo run -- -contract-name simple-token transfer faucet.simple-token alice.id 10
+cargo run -- --contract-name simple-token transfer faucet.simple-token bob.id 50
+cargo run -- --contract-name simple-token transfer faucet.simple-token alice.id 10
 ```
 
 The node's log will show:
