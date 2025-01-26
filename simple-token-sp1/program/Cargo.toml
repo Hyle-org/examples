@@ -1,0 +1,11 @@
+[package]
+version = "0.1.0"
+name = "simple_token"
+edition = "2021"
+
+[dependencies]
+sdk = { workspace = true, features = ["sp1"] }
+contract = { path = "../lib", package = "contract"}
+sp1-zkvm = "4.0.0"
+
+

@@ -1,0 +1,15 @@
+[package]
+name = "contract-identity"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sdk = { workspace = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "alloc",
+] }
+bincode = { version = "2.0.0-rc.3" }
+serde_json = "1.0"
+hex = "0.4.3"
+sha2 = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.8" }
