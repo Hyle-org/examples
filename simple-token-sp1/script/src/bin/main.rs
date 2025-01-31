@@ -6,7 +6,6 @@ use sdk::erc20::ERC20;
 use sdk::BlobTransaction;
 use sdk::ContractAction;
 use sdk::ProofTransaction;
-use sdk::RegisterContractTransaction;
 use sdk::{ContractInput, Digestable};
 
 use sp1_sdk::{include_elf, ProverClient};
@@ -69,17 +68,14 @@ async fn main() -> anyhow::Result<()> {
             let vk = serde_json::to_vec(&vk).unwrap();
 
             // Send the transaction to register the contract
-            let register_tx = RegisterContractTransaction {
-                owner: "examples".to_string(),
-                verifier: "sp1".into(),
-                program_id: sdk::ProgramId(vk),
-                state_digest: initial_state.as_digest(),
-                contract_name: contract_name.clone().into(),
-            };
             let res = client
-                .send_tx_register_contract(&register_tx)
-                .await
-                .context("failed to send tx")?;
+                .register_contract(&sdk::api::APIRegisterContract {
+                    verifier: "sp1".into(),
+                    program_id: sdk::ProgramId(vk),
+                    state_digest: initial_state.as_digest(),
+                    contract_name: contract_name.clone().into(),
+                })
+                .await?;
 
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
@@ -139,7 +135,8 @@ async fn main() -> anyhow::Result<()> {
                 initial_state: initial_state.as_digest(),
                 identity: from.clone().into(),
                 tx_hash: blob_tx_hash,
-                private_blob: sdk::BlobData(vec![]),
+                private_input: vec![],
+                tx_ctx: None,
                 blobs: blobs.clone(),
                 index: sdk::BlobIndex(0),
             };

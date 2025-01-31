@@ -3,10 +3,10 @@ use std::collections::BTreeMap;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use sdk::{erc20::ERC20, Digestable, HyleOutput, Identity};
+use sdk::{erc20::ERC20, Digestable, Identity, RunResult};
 
 /// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
+pub fn execute(contract_input: sdk::ContractInput) -> RunResult<TokenContract> {
     // Parse contract inputs
     let (input, parsed_blob, caller) =
         match sdk::guest::init_with_caller::<sdk::erc20::ERC20Action>(contract_input) {
@@ -20,11 +20,9 @@ pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
     let state: TokenContractState = input.initial_state.clone().into();
 
     // Execute the given action
-    let mut contract = TokenContract::init(state, caller);
-    let execution_result = sdk::erc20::execute_action(&mut contract, parsed_blob.data.parameters);
-    let new_state = contract.state();
+    let contract = TokenContract::init(state, caller);
 
-    sdk::utils::as_hyle_output(input, new_state, execution_result)
+    sdk::erc20::execute_action(contract, parsed_blob.data.parameters)
 }
 
 /// The state of the contract, that is totally serialized on-chain
@@ -147,5 +145,11 @@ impl From<sdk::StateDigest> for TokenContractState {
             .map_err(|_| "Could not decode hyllar state".to_string())
             .unwrap();
         state
+    }
+}
+
+impl Digestable for TokenContract {
+    fn as_digest(&self) -> sdk::StateDigest {
+        self.state.as_digest()
     }
 }

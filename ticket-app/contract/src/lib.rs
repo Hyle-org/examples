@@ -1,12 +1,10 @@
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use sdk::{
-    erc20::ERC20Action, BlobIndex, ContractName, Digestable, HyleOutput, Identity, RunResult,
-};
+use sdk::{erc20::ERC20Action, BlobIndex, ContractName, Digestable, Identity, RunResult};
 
 /// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
+pub fn execute(contract_input: sdk::ContractInput) -> RunResult<TicketAppContract> {
     let (input, ticket_app_action) = sdk::guest::init_raw::<TicketAppAction>(contract_input);
     let ticket_app_contract_name = input
         .blobs
@@ -14,9 +12,11 @@ pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
         .unwrap()
         .contract_name
         .clone();
+    let ticket_app_action = ticket_app_action.ok_or("failed to parse action")?;
 
     let transfer_action =
-        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(1));
+        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(1))
+            .ok_or("failed to parse action")?;
 
     let transfer_action_contract_name = input.blobs.get(1).unwrap().contract_name.clone();
 
@@ -35,7 +35,7 @@ pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
         TicketAppAction::HasTicket {} => ticket_app_contract.has_ticket(),
     };
 
-    sdk::utils::as_hyle_output(input, ticket_app_contract.state, res)
+    res.map(|output| (output, ticket_app_contract, vec![]))
 }
 
 /// Enum representing the actions that can be performed by the Amm contract.
@@ -77,7 +77,11 @@ impl TicketAppContract {
         }
     }
 
-    pub fn buy_ticket(&mut self, erc20_action: ERC20Action, erc20_name: ContractName) -> RunResult {
+    pub fn buy_ticket(
+        &mut self,
+        erc20_action: ERC20Action,
+        erc20_name: ContractName,
+    ) -> Result<String, String> {
         // Check that a blob exists matching the given action, pop it from the callee blobs.
 
         if self.state.tickets.contains(&self.identity) {
@@ -122,7 +126,7 @@ impl TicketAppContract {
         Ok(program_outputs)
     }
 
-    pub fn has_ticket(&mut self) -> RunResult {
+    pub fn has_ticket(&mut self) -> Result<String, String> {
         // Check that a blob exists matching the given action, pop it from the callee blobs.
 
         if self.state.tickets.contains(&self.identity) {
@@ -150,5 +154,10 @@ impl From<sdk::StateDigest> for TicketAppState {
             bincode::decode_from_slice(&state.0, bincode::config::standard())
                 .expect("Could not decode TicketAppState");
         ticket_app_state
+    }
+}
+impl Digestable for TicketAppContract {
+    fn as_digest(&self) -> sdk::StateDigest {
+        self.state.as_digest()
     }
 }

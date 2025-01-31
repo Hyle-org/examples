@@ -513,8 +513,8 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.7.1#015afdc711269271ebf6e113af5422b0a63426e8"
+version = "0.8.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.9.0#6218e2d6e5eddbc7ae26f7c794a7798e1e67ba98"
 dependencies = [
  "bincode",
  "hyle-model",
@@ -524,8 +524,8 @@ dependencies = [
 
 [[package]]
 name = "hyle-model"
-version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.7.1#015afdc711269271ebf6e113af5422b0a63426e8"
+version = "0.8.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.9.0#6218e2d6e5eddbc7ae26f7c794a7798e1e67ba98"
 dependencies = [
  "bincode",
  "hex",

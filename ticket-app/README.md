@@ -70,10 +70,8 @@ cargo run -- --contract-name simple-token transfer faucet.simple-token alice.id 
 
 The node's log will show:
 
-> INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+> INFO hyle_verifiers: ✅ Risc0 proof verified.
 >
-> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 50 to bob.id
-> INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 10 to alice.id
 
 Check onchain balance:
 
