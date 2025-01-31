@@ -4,7 +4,6 @@ extern crate alloc;
 
 use sdk::guest::GuestEnv;
 use sdk::guest::SP1Env;
-
 use contract::execute;
 
 sp1_zkvm::entrypoint!(main);
