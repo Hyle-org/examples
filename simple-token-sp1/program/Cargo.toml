@@ -6,6 +6,4 @@ edition = "2021"
 [dependencies]
 sdk = { workspace = true, features = ["sp1"] }
 contract = { path = "../lib", package = "contract"}
-sp1-zkvm = "4.0.0"
-
-
+sp1-zkvm = { git = "https://github.com/succinctlabs/sp1", tag = "v4.0.1" }
