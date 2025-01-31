@@ -1,9 +1,6 @@
-use anyhow::Context;
 use clap::{Parser, Subcommand};
-// Import from the local contract crate instead
-use contract::IdentityContractState;  // Changed this import
+use contract::IdentityContractState;
 use sdk::BlobTransaction;
-// Removed unused import: use sdk::ContractAction;
 use sdk::ProofTransaction;
 use sdk::RegisterContractTransaction;
 use sdk::{ContractInput, Digestable};
@@ -49,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let cli = Cli::parse();
-    let client = client_sdk::rest_client::NodeApiHttpClient::new(cli.host)?;
+    let client = client_sdk::rest_client::NodeApiHttpClient::new(cli.host).unwrap();
     let contract_name = &cli.contract_name;
 
     match cli.command {
@@ -73,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
             let res = client
                 .send_tx_register_contract(&register_tx)
                 .await
-                .context("failed to send tx")?;
+                .unwrap();
 
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
@@ -82,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
             let initial_state: IdentityContractState = client
                 .get_contract(&contract_name.clone().into())
                 .await
-                .context("failed to get contract")?
+                .unwrap()
                 .state
                 .into();
 
@@ -93,8 +90,13 @@ async fn main() -> anyhow::Result<()> {
             let action = sdk::identity_provider::IdentityAction::RegisterIdentity {
                 account: identity.clone(),
             };
-            // Fixed as_blob call to use single argument
-            let blobs = vec![action.as_blob(contract_name.clone().into())];
+            
+            let blobs = vec![sdk::Blob {
+                contract_name: contract_name.clone().into(),
+                data: sdk::BlobData(
+                    bincode::serialize(&action).expect("failed to encode BlobData")
+                ),
+            }];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
                 blobs: blobs.clone(),
@@ -102,11 +104,11 @@ async fn main() -> anyhow::Result<()> {
 
             println!("blob_tx: {:#?}", blob_tx);
             // Send the blob transaction
-            let blob_tx_hash = client
-                .send_tx_blob(&blob_tx)
-                .await
-                .context("cannot send tx")?;
+            let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
             println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+
+            // Add delay to ensure blob transaction is processed
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
             // Build the contract input
             let inputs = ContractInput {
@@ -122,19 +124,18 @@ async fn main() -> anyhow::Result<()> {
 
             // Generate the zk proof
             println!("🔍 Proving state transition...");
-            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs)
-                .context("failed to prove")?;
+            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs).unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
                 contract_name: contract_name.clone().into(),
             };
 
+            // Add delay before sending proof transaction
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .context("failed to send proof")?;
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
         Commands::VerifyIdentity {
@@ -146,7 +147,7 @@ async fn main() -> anyhow::Result<()> {
             let initial_state: IdentityContractState = client
                 .get_contract(&contract_name.clone().into())
                 .await
-                .context("failed to get contract")?
+                .unwrap()
                 .state
                 .into();
 
@@ -155,8 +156,13 @@ async fn main() -> anyhow::Result<()> {
                 account: identity.clone(),
                 nonce,
             };
-            // Fixed as_blob call to use single argument
-            let blobs = vec![action.as_blob(contract_name.clone().into())];
+            
+            let blobs = vec![sdk::Blob {
+                contract_name: contract_name.clone().into(),
+                data: sdk::BlobData(
+                    bincode::serialize(&action).expect("failed to encode BlobData")
+                ),
+            }];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
                 blobs: blobs.clone(),
@@ -164,11 +170,11 @@ async fn main() -> anyhow::Result<()> {
 
             println!("blob_tx: {:#?}", blob_tx);
             // Send the blob transaction
-            let blob_tx_hash = client
-                .send_tx_blob(&blob_tx)
-                .await
-                .context("cannot send tx")?;
+            let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
             println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+
+            // Add delay to ensure blob transaction is processed
+            tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
 
             // Build the contract input
             let inputs = ContractInput {
@@ -184,19 +190,18 @@ async fn main() -> anyhow::Result<()> {
 
             // Generate the zk proof
             println!("🔍 Proving state transition...");
-            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs)
-                .context("failed to prove")?;
+            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs).unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
                 contract_name: contract_name.clone().into(),
             };
 
+            // Add delay before sending proof transaction
+            tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+
             // Send the proof transaction
-            let proof_tx_hash = client
-                .send_tx_proof(&proof_tx)
-                .await
-                .context("failed to send proof")?;
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
     }
