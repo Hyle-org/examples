@@ -1,8 +1,9 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use contract_identity::IdentityContractState;
+// Import from the local contract crate instead
+use contract::IdentityContractState;  // Changed this import
 use sdk::BlobTransaction;
-use sdk::ContractAction;
+// Removed unused import: use sdk::ContractAction;
 use sdk::ProofTransaction;
 use sdk::RegisterContractTransaction;
 use sdk::{ContractInput, Digestable};
@@ -92,7 +93,8 @@ async fn main() -> anyhow::Result<()> {
             let action = sdk::identity_provider::IdentityAction::RegisterIdentity {
                 account: identity.clone(),
             };
-            let blobs = vec![action.as_blob(contract_name.clone().into(), None, None)];
+            // Fixed as_blob call to use single argument
+            let blobs = vec![action.as_blob(contract_name.clone().into())];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
                 blobs: blobs.clone(),
@@ -153,7 +155,8 @@ async fn main() -> anyhow::Result<()> {
                 account: identity.clone(),
                 nonce,
             };
-            let blobs = vec![action.as_blob(contract_name.clone().into(), None, None)];
+            // Fixed as_blob call to use single argument
+            let blobs = vec![action.as_blob(contract_name.clone().into())];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
                 blobs: blobs.clone(),
