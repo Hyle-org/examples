@@ -1,0 +1,12 @@
+[package]
+name = "guest"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", features = ["risc0"], tag = "v0.7.2" }
+contract-identity = { path = "../../contract"}
+
+risc0-zkvm = { version = "1.2.1", default-features = false, features = ['std'] }

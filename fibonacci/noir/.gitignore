@@ -1,8 +1,0 @@
-*.sh
-target/
-prover/outputs/
-Prover.toml
-Verifier.toml
-prover/node_modules
-prover/*.lockb
-

@@ -1,0 +1,31 @@
+{
+  "version": "0.1.0",
+  "description": "Hyle identity registration",
+  "proposedName": "Hyle snap",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+  },
+  "source": {
+    "shasum": "zacChULDY/JqYjz8DWw5TiJUDd/Xn7RErwcaFLf/45U=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "img/hyle_logo.svg",
+        "packageName": "snap",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "snap_dialog": {},
+    "endowment:network-access": {},
+    "endowment:ethereum-provider": {},
+    "endowment:page-home": {},
+    "endowment:lifecycle-hooks": {},
+    "snap_manageState": {},
+    "snap_notify": {}
+  },
+  "platformVersion": "6.14.0",
+  "manifestVersion": "0.1"
+}
