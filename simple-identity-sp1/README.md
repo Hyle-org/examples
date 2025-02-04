@@ -1,17 +1,15 @@
 # SP1 Project Template
 
-This is a template for creating an end-to-end [SP1](https://github.com/succinctlabs/sp1) project
-that can generate a proof of any RISC-V program.
+This is a simple example of a token transfer contract working with SP1 prover.
+The logic is the very similar to the `simple_token` example (for risc0)
 
 ## Requirements
 
 - [Rust](https://rustup.rs/)
-- [SP1](https://docs.succinct.xyz/getting-started/install.html)
+- [SP1 4.0.0-rc1](https://docs.succinct.xyz/getting-started/install.html)
+- [A running hyle devnet](https://docs.hyle.eu/developers/quickstart/devnet/)
 
 ## Running the Project
-
-There are four main ways to run this project: build a program, execute a program, generate a core proof, and
-generate an EVM-compatible proof.
 
 ### Build the Program
 
@@ -22,71 +20,51 @@ cd program
 cargo prove build
 ```
 
-### Execute the Program
+### Build and register the identity contract
 
-To run the program without generating a proof:
-
-```sh
-cd script
-cargo run --release -- --execute
-```
-
-This will execute the program and display the output.
-
-### Generate a Core Proof
-
-To generate a core proof for your program:
+To build all methods and register the smart contract on the local node from the source, run:
 
 ```sh
 cd script
-cargo run --release -- --prove
+cargo run -- register-contract
 ```
+The expected output is `📝 Registering new contract simple_identity`.
 
-### Generate an EVM-Compatible Proof
+### Register an account / Sign up
 
-> [!WARNING]
-> You will need at least 128GB RAM to generate a Groth16 or PLONK proof.
-
-To generate a proof that is small enough to be verified on-chain and verifiable by the EVM:
+To register an account with a username (alice) and password (abc123), execute:
 
 ```sh
-cd script
-cargo run --release --bin evm -- --system groth16
+cargo run -- register-identity alice.simple_identity abc123
 ```
-
-this will generate a Groth16 proof. If you want to generate a PLONK proof, run the following command:
+The node's logs will display:
 
 ```sh
-cargo run --release --bin evm -- --system plonk
+INFO hyle_verifiers: ✅ SP1 proof verified.
+
 ```
+### Verify identity / Login
 
-These commands will also generate fixtures that can be used to test the verification of SP1 zkVM proofs
-inside Solidity.
-
-### Retrieve the Verification Key
-
-To retrieve your `programVKey` for your on-chain contract, run the following command in `script`:
+To verify alice's identity:
 
 ```sh
-cargo run --release --bin vkey
+cargo run -- verify-identity alice.simple_identity abc123 0
 ```
+This command will:
 
-## Using the Prover Network
+1. Send a blob transaction to verify `alice`'s identity.
+1. Generate a ZK proof of that identity. It will only be valid once, thus the inclusion of a nonce.
+1. Send the proof to the devnet.
 
-We highly recommend using the Succinct prover network for any non-trivial programs or benchmarking purposes. For more information, see the [setup guide](https://docs.succinct.xyz/docs/generating-proofs/prover-network).
+Upon reception of the proof, the node will:
 
-To get started, copy the example environment file:
+1. Verify the proof.
+1. Settle the blob transaction.
+1. Update the contract's state.
 
-```sh
-cp .env.example .env
-```
+The node's logs will display:
 
-Then, set the `SP1_PROVER` environment variable to `network` and set the `NETWORK_PRIVATE_KEY`
-environment variable to your whitelisted private key.
-
-For example, to generate an EVM-compatible proof using the prover network, run the following
-command:
-
-```sh
-SP1_PROVER=network NETWORK_PRIVATE_KEY=... cargo run --release --bin evm
+```bash
+INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
+INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Identity verified for account: alice.simple_identity
 ```
