@@ -1,4 +1,6 @@
 use bincode::{Decode, Encode};
+use hex;
+use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use sdk::{identity_provider::IdentityVerification, Digestable, RunResult};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -72,7 +74,6 @@ impl WebAuthnContractState {
         let challenge = self.challenges.get(&username).ok_or("No challenge found")?;
 
         // Verify the signature using the public key
-        // This would use P256 verification logic
         let is_valid = verify_p256_signature(
             &credential.public_key,
             &signature,
@@ -100,8 +101,24 @@ fn verify_p256_signature(
     client_data_json: &[u8],
     challenge: &[u8],
 ) -> Result<bool, &'static str> {
-    //// Need to implement secp256k1 verification
-    Ok(true)
+    let client_data_hash = Sha256::digest(client_data_json);
+
+    let mut message = Vec::new();
+    message.extend_from_slice(authenticator_data);
+    message.extend_from_slice(&client_data_hash);
+
+    let verifying_key =
+        VerifyingKey::from_sec1_bytes(public_key).map_err(|_| "Invalid public key")?;
+
+    // Parse the DER-encoded signature.
+    let sig = Signature::from_der(signature).map_err(|_| "Invalid signature format")?;
+
+    // Verify the signature against the message.
+    if verifying_key.verify(&message, &sig).is_ok() {
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 /// Entry point of the contract's logic
@@ -139,7 +156,8 @@ pub fn execute(contract_input: sdk::ContractInput) -> RunResult<WebAuthnContract
         }
     }
 
-    Ok(state)
+    // Return the tuple that RunResult expects
+    Ok((String::new(), state, vec![]))
 }
 
 /// Struct to hold account's information
@@ -273,4 +291,23 @@ pub enum WebAuthnAction {
         authenticator_data: Vec<u8>,
         client_data_json: Vec<u8>,
     },
+}
+
+impl From<sdk::StateDigest> for WebAuthnContractState {
+    fn from(state: sdk::StateDigest) -> Self {
+        let (state, _) = bincode::decode_from_slice(&state.0, bincode::config::standard())
+            .map_err(|_| "Could not decode WebAuthn state".to_string())
+            .unwrap();
+        state
+    }
+}
+
+// Also implement Digestable for WebAuthnContractState
+impl Digestable for WebAuthnContractState {
+    fn as_digest(&self) -> sdk::StateDigest {
+        sdk::StateDigest(
+            bincode::encode_to_vec(self, bincode::config::standard())
+                .expect("Failed to encode WebAuthn state"),
+        )
+    }
 }
