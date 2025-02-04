@@ -64,7 +64,3 @@ Upon reception of the proof, the node will:
 
 The node's logs will display:
 
-```bash
-INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Identity verified for account: alice.simple_identity
-```
