@@ -45,14 +45,13 @@ Upon reception of the proof, the node will:
 The node's logs will display:
 
 ```bash
-INFO hyle::data_availability::node_state::verifiers: ✅ Risc0 proof verified.
-INFO hyle::data_availability::node_state::verifiers: 🔎 Program outputs: Transferred 2 to bob.simple_token
+INFO hyle_verifiers: ✅ Risc0 proof verified.
 ```
 
 And on the following slot:
 
 ```bash
-INFO hyle::data_availability::node_state: Settle tx TxHash("[..]")
+INFO hyle::node_state: ✨ Settled tx [...] TxHash("[..]")
 ```
 
 #### Check onchain balance
