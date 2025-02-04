@@ -1,7 +1,7 @@
 # SP1 Project Template
 
 This is a simple example of a token transfer contract working with SP1 prover.
-The logic is the very similar to the `simple_token` example (for risc0)
+The logic is very similar to the `simple_token` example (for risc0)
 
 ## Requirements
 

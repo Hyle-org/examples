@@ -3,25 +3,25 @@ use std::collections::BTreeMap;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-use sdk::{identity_provider::IdentityVerification, Digestable, HyleOutput};
+use sdk::{identity_provider::IdentityVerification, Digestable, RunResult};
 use sha2::{Digest, Sha256};
 
 /// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> HyleOutput {
+pub fn execute(contract_input: sdk::ContractInput) -> RunResult<IdentityContractState> {
     // Parse contract inputs
     let (input, action) =
         sdk::guest::init_raw::<sdk::identity_provider::IdentityAction>(contract_input);
 
+    let action = action.ok_or("Failed to parse action")?;
+
     // Parse initial state
-    let mut state: IdentityContractState = input.initial_state.clone().into();
+    let state: IdentityContractState = input.initial_state.clone().into();
 
     // Extract private information
-    let password = core::str::from_utf8(&input.private_blob.0).unwrap();
+    let password = core::str::from_utf8(&input.private_input).unwrap();
 
     // Execute the given action
-    let res = sdk::identity_provider::execute_action(&mut state, action, password);
-
-    sdk::utils::as_hyle_output(input, state, res)
+    sdk::identity_provider::execute_action(state, action, password)
 }
 
 /// Struct to hold account's information
