@@ -11,4 +11,3 @@ sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk",
 client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", tag = "v0.9.0" }
 
 
-
