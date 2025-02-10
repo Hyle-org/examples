@@ -111,32 +111,25 @@ async fn main() {
                 sdk::Blob {
                     contract_name: identity_contract_name.clone().into(),
                     data: sdk::BlobData(
-                        bincode::encode_to_vec(identity_cf, bincode::config::standard())
-                            .expect("Failed to encode Identity action"),
+                        borsh::to_vec(&identity_cf).expect("Failed to encode Identity action"),
                     ),
                 },
                 // Init pair 0 amount
                 sdk::Blob {
                     contract_name: initial_state.ticket_price.0.clone(),
                     data: sdk::BlobData(
-                        bincode::encode_to_vec(
-                            sdk::erc20::ERC20Action::Transfer {
-                                recipient: contract_name.clone(),
-                                amount: initial_state.ticket_price.1,
-                            },
-                            bincode::config::standard(),
-                        )
+                        borsh::to_vec(&sdk::erc20::ERC20Action::Transfer {
+                            recipient: contract_name.clone(),
+                            amount: initial_state.ticket_price.1,
+                        })
                         .expect("Failed to encode Erc20 transfer action"),
                     ),
                 },
                 sdk::Blob {
                     contract_name: contract_name.clone().into(),
                     data: sdk::BlobData(
-                        bincode::encode_to_vec(
-                            TicketAppAction::BuyTicket {},
-                            bincode::config::standard(),
-                        )
-                        .expect("Failed to encode Buy Ticket action"),
+                        borsh::to_vec(&TicketAppAction::BuyTicket {})
+                            .expect("Failed to encode Buy Ticket action"),
                     ),
                 },
             ];

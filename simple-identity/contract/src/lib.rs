@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use bincode::{Decode, Encode};
+use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
 use sdk::{identity_provider::IdentityVerification, Digestable, RunResult};
@@ -25,14 +25,14 @@ pub fn execute(contract_input: sdk::ContractInput) -> RunResult<IdentityContract
 }
 
 /// Struct to hold account's information
-#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct AccountInfo {
     pub hash: String,
     pub nonce: u32,
 }
 
 /// The state of the contract, that is totally serialized on-chain
-#[derive(Encode, Decode, Serialize, Deserialize, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug, Clone)]
 pub struct IdentityContractState {
     identities: BTreeMap<String, AccountInfo>,
 }
@@ -123,17 +123,13 @@ impl Default for IdentityContractState {
 /// while storing the full-state off-chain
 impl Digestable for IdentityContractState {
     fn as_digest(&self) -> sdk::StateDigest {
-        sdk::StateDigest(
-            bincode::encode_to_vec(self, bincode::config::standard())
-                .expect("Failed to encode Balances"),
-        )
+        sdk::StateDigest(borsh::to_vec(&self).expect("Failed to encode Balances"))
     }
 }
 impl From<sdk::StateDigest> for IdentityContractState {
     fn from(state: sdk::StateDigest) -> Self {
-        let (state, _) = bincode::decode_from_slice(&state.0, bincode::config::standard())
+        borsh::from_slice(&state.0)
             .map_err(|_| "Could not decode identity state".to_string())
-            .unwrap();
-        state
+            .unwrap()
     }
 }

@@ -201,25 +201,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
-name = "bincode"
-version = "2.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f11ea1a0346b94ef188834a65c068a03aec181c94896d481d7a0a40d85b0ce95"
-dependencies = [
- "bincode_derive",
- "serde",
-]
-
-[[package]]
-name = "bincode_derive"
-version = "2.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e30759b3b99a1b802a7a3aa21c85c3ded5c28e1c83170d82d70f08bbf7f3e4c"
-dependencies = [
- "virtue",
-]
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -257,9 +238,9 @@ dependencies = [
 
 [[package]]
 name = "borsh"
-version = "1.5.3"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2506947f73ad44e344215ccd6403ac2ae18cd8e046e581a441bf8d199f257f03"
+checksum = "5430e3be710b68d984d1391c854eb431a9d548640711faa54eecb1df93db91cc"
 dependencies = [
  "borsh-derive",
  "cfg_aliases",
@@ -267,9 +248,9 @@ dependencies = [
 
 [[package]]
 name = "borsh-derive"
-version = "1.5.3"
+version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2593a3b8b938bd68373196c9832f516be11fa487ef4ae745eb282e6a56a7244"
+checksum = "f8b668d39970baad5356d7c83a86fee3a539e6f93bf6764c97368243e17a0487"
 dependencies = [
  "once_cell",
  "proc-macro-crate",
@@ -326,7 +307,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 name = "contract"
 version = "0.1.0"
 dependencies = [
- "bincode",
+ "borsh",
  "hyle-contract-sdk",
  "serde",
 ]
@@ -510,10 +491,10 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.8.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.9.0#6218e2d6e5eddbc7ae26f7c794a7798e1e67ba98"
+version = "0.10.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.10.0#44163bad5e1d6d7a68941fb65630c756143a4043"
 dependencies = [
- "bincode",
+ "borsh",
  "hyle-model",
  "risc0-zkvm",
  "serde",
@@ -521,10 +502,10 @@ dependencies = [
 
 [[package]]
 name = "hyle-model"
-version = "0.8.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.9.0#6218e2d6e5eddbc7ae26f7c794a7798e1e67ba98"
+version = "0.10.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.10.0#44163bad5e1d6d7a68941fb65630c756143a4043"
 dependencies = [
- "bincode",
+ "borsh",
  "hex",
  "serde",
 ]
@@ -1046,12 +1027,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "virtue"
-version = "0.0.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dcc60c0624df774c82a0ef104151231d37da4962957d691c011c852b2473314"
 
 [[package]]
 name = "wasi"

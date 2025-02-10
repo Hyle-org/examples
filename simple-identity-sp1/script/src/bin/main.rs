@@ -1,8 +1,8 @@
 use clap::{Parser, Subcommand};
 use contract::IdentityContractState;
+use sdk::api::APIRegisterContract;
 use sdk::BlobTransaction;
 use sdk::ProofTransaction;
-use sdk::RegisterContractTransaction;
 use sdk::{ContractInput, Digestable};
 
 use sp1_sdk::{include_elf, ProverClient};
@@ -60,17 +60,13 @@ async fn main() -> anyhow::Result<()> {
             let vk = serde_json::to_vec(&vk).unwrap();
 
             // Send the transaction to register the contract
-            let register_tx = RegisterContractTransaction {
-                owner: "examples".to_string(),
+            let register_tx = APIRegisterContract {
                 verifier: "sp1".into(),
                 program_id: sdk::ProgramId(vk),
                 state_digest: initial_state.as_digest(),
                 contract_name: contract_name.clone().into(),
             };
-            let res = client
-                .send_tx_register_contract(&register_tx)
-                .await
-                .unwrap();
+            let res = client.register_contract(&register_tx).await.unwrap();
 
             println!("✅ Register contract tx sent. Tx hash: {}", res);
         }
@@ -90,12 +86,10 @@ async fn main() -> anyhow::Result<()> {
             let action = sdk::identity_provider::IdentityAction::RegisterIdentity {
                 account: identity.clone(),
             };
-            
+
             let blobs = vec![sdk::Blob {
                 contract_name: contract_name.clone().into(),
-                data: sdk::BlobData(
-                    bincode::serialize(&action).expect("failed to encode BlobData")
-                ),
+                data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
@@ -115,9 +109,10 @@ async fn main() -> anyhow::Result<()> {
                 initial_state: initial_state.as_digest(),
                 identity: blob_tx.identity,
                 tx_hash: blob_tx_hash,
-                private_blob: sdk::BlobData(password.into_bytes().to_vec()),
+                private_input: password.into_bytes().to_vec(),
                 blobs: blobs.clone(),
                 index: sdk::BlobIndex(0),
+                tx_ctx: None,
             };
 
             println!("inputs: {:#?}", inputs);
@@ -156,12 +151,10 @@ async fn main() -> anyhow::Result<()> {
                 account: identity.clone(),
                 nonce,
             };
-            
+
             let blobs = vec![sdk::Blob {
                 contract_name: contract_name.clone().into(),
-                data: sdk::BlobData(
-                    bincode::serialize(&action).expect("failed to encode BlobData")
-                ),
+                data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
             let blob_tx = BlobTransaction {
                 identity: identity.into(),
@@ -181,9 +174,10 @@ async fn main() -> anyhow::Result<()> {
                 initial_state: initial_state.as_digest(),
                 identity: blob_tx.identity,
                 tx_hash: blob_tx_hash,
-                private_blob: sdk::BlobData(password.into_bytes().to_vec()),
+                private_input: password.into_bytes().to_vec(),
                 blobs: blobs.clone(),
                 index: sdk::BlobIndex(0),
+                tx_ctx: None,
             };
 
             println!("inputs: {:#?}", inputs);
@@ -207,3 +201,4 @@ async fn main() -> anyhow::Result<()> {
     }
     Ok(())
 }
+

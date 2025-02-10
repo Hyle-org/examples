@@ -111,10 +111,7 @@ async fn main() {
             };
             let blobs = vec![sdk::Blob {
                 contract_name: contract_name.clone().into(),
-                data: sdk::BlobData(
-                    bincode::encode_to_vec(action, bincode::config::standard())
-                        .expect("failed to encode BlobData"),
-                ),
+                data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
             let blob_tx = BlobTransaction {
                 identity: from.clone().into(),

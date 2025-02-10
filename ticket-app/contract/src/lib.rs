@@ -1,4 +1,4 @@
-use bincode::{Decode, Encode};
+use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
 use sdk::{erc20::ERC20Action, BlobIndex, ContractName, Digestable, Identity, RunResult};
@@ -39,7 +39,7 @@ pub fn execute(contract_input: sdk::ContractInput) -> RunResult<TicketAppContrac
 }
 
 /// Enum representing the actions that can be performed by the Amm contract.
-#[derive(Encode, Decode, Debug, Clone)]
+#[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub enum TicketAppAction {
     BuyTicket {},
     HasTicket {},
@@ -53,7 +53,7 @@ pub struct TicketAppContract {
 }
 
 /// The state of the contract, that is totally serialized on-chain
-#[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone, BorshSerialize, BorshDeserialize, Default)]
 pub struct TicketAppState {
     pub ticket_price: (ContractName, u128),
     pub tickets: Vec<Identity>,
@@ -142,18 +142,12 @@ impl TicketAppContract {
 /// while storing the full-state off-chain
 impl Digestable for TicketAppState {
     fn as_digest(&self) -> sdk::StateDigest {
-        sdk::StateDigest(
-            bincode::encode_to_vec(self, bincode::config::standard())
-                .expect("Failed to encode TicketAppState"),
-        )
+        sdk::StateDigest(borsh::to_vec(self).expect("Failed to encode TicketAppState"))
     }
 }
 impl From<sdk::StateDigest> for TicketAppState {
     fn from(state: sdk::StateDigest) -> Self {
-        let (ticket_app_state, _) =
-            bincode::decode_from_slice(&state.0, bincode::config::standard())
-                .expect("Could not decode TicketAppState");
-        ticket_app_state
+        borsh::from_slice(&state.0).expect("Could not decode TicketAppState")
     }
 }
 impl Digestable for TicketAppContract {

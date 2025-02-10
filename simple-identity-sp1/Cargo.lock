@@ -68,7 +68,7 @@ dependencies = [
  "alloy-trie",
  "auto_impl",
  "c-kzg",
- "derive_more",
+ "derive_more 1.0.0",
  "serde",
 ]
 
@@ -105,7 +105,7 @@ checksum = "4c986539255fb839d1533c128e190e557e52ff652c9ef62939e233a81dd93f7e"
 dependencies = [
  "alloy-primitives",
  "alloy-rlp",
- "derive_more",
+ "derive_more 1.0.0",
  "serde",
 ]
 
@@ -121,7 +121,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "c-kzg",
- "derive_more",
+ "derive_more 1.0.0",
  "once_cell",
  "serde",
  "sha2 0.10.8 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -201,7 +201,7 @@ dependencies = [
  "bytes",
  "cfg-if",
  "const-hex",
- "derive_more",
+ "derive_more 1.0.0",
  "foldhash",
  "hashbrown 0.15.2",
  "indexmap 2.7.1",
@@ -265,7 +265,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "alloy-sol-types",
- "derive_more",
+ "derive_more 1.0.0",
  "itertools 0.13.0",
  "serde",
  "serde_json",
@@ -391,7 +391,7 @@ dependencies = [
  "alloy-primitives",
  "alloy-rlp",
  "arrayvec",
- "derive_more",
+ "derive_more 1.0.0",
  "nybbles",
  "serde",
  "smallvec",
@@ -786,25 +786,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bincode"
-version = "2.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f11ea1a0346b94ef188834a65c068a03aec181c94896d481d7a0a40d85b0ce95"
-dependencies = [
- "bincode_derive",
- "serde",
-]
-
-[[package]]
-name = "bincode_derive"
-version = "2.0.0-rc.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e30759b3b99a1b802a7a3aa21c85c3ded5c28e1c83170d82d70f08bbf7f3e4c"
-dependencies = [
- "virtue",
-]
-
-[[package]]
 name = "bindgen"
 version = "0.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -917,7 +898,21 @@ version = "1.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5430e3be710b68d984d1391c854eb431a9d548640711faa54eecb1df93db91cc"
 dependencies = [
+ "borsh-derive",
  "cfg_aliases",
+]
+
+[[package]]
+name = "borsh-derive"
+version = "1.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8b668d39970baad5356d7c83a86fee3a539e6f93bf6764c97368243e17a0487"
+dependencies = [
+ "once_cell",
+ "proc-macro-crate 3.2.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
 ]
 
 [[package]]
@@ -1117,17 +1112,18 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
 name = "client-sdk"
-version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.7.2#68026ffc88d44d2b184a6e1cc019d5593b2c40c7"
+version = "0.10.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.10.0#44163bad5e1d6d7a68941fb65630c756143a4043"
 dependencies = [
  "anyhow",
- "bincode 2.0.0-rc.3",
+ "bincode",
  "borsh",
  "hyle-contract-sdk",
  "reqwest",
  "serde",
  "serde_json",
  "sp1-sdk",
+ "tracing",
 ]
 
 [[package]]
@@ -1178,7 +1174,7 @@ checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
 name = "contract"
 version = "0.1.0"
 dependencies = [
- "bincode 2.0.0-rc.3",
+ "borsh",
  "hex",
  "hyle-contract-sdk",
  "serde",
@@ -1444,7 +1440,16 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a9b99b9cbbe49445b21764dc0625032a89b145a2642e67603e1c936f5458d05"
 dependencies = [
- "derive_more-impl",
+ "derive_more-impl 1.0.0",
+]
+
+[[package]]
+name = "derive_more"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "093242cf7570c207c83073cf82f79706fe7b8317e98620a47d5be7c3d8497678"
+dependencies = [
+ "derive_more-impl 2.0.1",
 ]
 
 [[package]]
@@ -1452,6 +1457,18 @@ name = "derive_more-impl"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
+ "unicode-xid",
+]
+
+[[package]]
+name = "derive_more-impl"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bda628edc44c4bb645fbe0f758797143e4e07926f7ebf4e9bdfbd3d2ce621df3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2118,10 +2135,10 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.7.2#68026ffc88d44d2b184a6e1cc019d5593b2c40c7"
+version = "0.10.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.10.0#44163bad5e1d6d7a68941fb65630c756143a4043"
 dependencies = [
- "bincode 2.0.0-rc.3",
+ "borsh",
  "hyle-model",
  "serde",
  "sp1-zkvm",
@@ -2129,20 +2146,21 @@ dependencies = [
 
 [[package]]
 name = "hyle-model"
-version = "0.6.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.7.2#68026ffc88d44d2b184a6e1cc019d5593b2c40c7"
+version = "0.10.0"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.10.0#44163bad5e1d6d7a68941fb65630c756143a4043"
 dependencies = [
  "anyhow",
  "base64",
- "bincode 2.0.0-rc.3",
  "blst",
- "derive_more",
+ "borsh",
+ "derive_more 2.0.1",
  "hex",
  "serde",
  "serde_json",
  "serde_with",
  "sha3",
  "strum_macros",
+ "utoipa",
 ]
 
 [[package]]
@@ -4110,7 +4128,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "346a3b32eba2640d17a9cb5927056b08f3de90f65b72fe09402c2ad07d684d0b"
 dependencies = [
  "cfg-if",
- "derive_more",
+ "derive_more 1.0.0",
  "parity-scale-codec",
  "scale-info-derive",
 ]
@@ -4156,7 +4174,6 @@ name = "script"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "bincode 1.3.3",
  "borsh",
  "clap",
  "client-sdk",
@@ -4520,7 +4537,7 @@ version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb8ec5621fba6c50f6ec4e0e963227d1ab2229840b0e210a57e1f18428bbcbc8"
 dependencies = [
- "bincode 1.3.3",
+ "bincode",
  "bytemuck",
  "clap",
  "elf",
@@ -4559,7 +4576,7 @@ version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe96b1962e6c10ac8321c9ea16161467ca27b43a75c02f42c82310d5e05768f5"
 dependencies = [
- "bincode 1.3.3",
+ "bincode",
  "cbindgen",
  "cc",
  "cfg-if",
@@ -4616,7 +4633,7 @@ version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2a78f87a3606de46272d2a153408768bf9b1897a37e231aa084425977fe8532"
 dependencies = [
- "bincode 1.3.3",
+ "bincode",
  "ctrlc",
  "prost",
  "serde",
@@ -4670,22 +4687,22 @@ dependencies = [
 
 [[package]]
 name = "sp1-lib"
-version = "4.0.1"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aac3d3deeed25e9cad80e4275faf5954aa63f213ed3422f0e098dd2d0c1b0c0e"
+checksum = "ec954a4567f51269fd10c304a8907862d4d2069aa2b479a18d0f063f29a6df8f"
 dependencies = [
- "bincode 1.3.3",
+ "bincode",
  "serde",
  "sp1-primitives",
 ]
 
 [[package]]
 name = "sp1-primitives"
-version = "4.0.1"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09b25a09b455dfae9c688da05718b205e8bd4afab36cd912d54639f5d4035815"
+checksum = "0a959284c1f0df979160dba98aa5d3d245697a5a3b9c992207afcd9e62e37732"
 dependencies = [
- "bincode 1.3.3",
+ "bincode",
  "hex",
  "lazy_static",
  "num-bigint 0.4.6",
@@ -4704,7 +4721,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40d5713392e803b1e609d626256015ddb5464e2f435fc55fa8f383bae111a4af"
 dependencies = [
  "anyhow",
- "bincode 1.3.3",
+ "bincode",
  "clap",
  "dirs",
  "downloader",
@@ -4856,7 +4873,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b39cc97057e5240a2ab3062234a60d6ee6dbdb852ef02ea5fe5f943f910f6c9e"
 dependencies = [
  "anyhow",
- "bincode 1.3.3",
+ "bincode",
  "bindgen",
  "cc",
  "cfg-if",
@@ -4888,7 +4905,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "backoff",
- "bincode 1.3.3",
+ "bincode",
  "cfg-if",
  "dirs",
  "futures",
@@ -4960,9 +4977,9 @@ dependencies = [
 
 [[package]]
 name = "sp1-zkvm"
-version = "4.0.1"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f971db10d58b13c9a5d8cee4f7d1195d6f8a2debb9c33bd67f4eea5817432d42"
+checksum = "04bd303b49b54a10dc82b909272b1e971fa851756743070ccf9676554459417f"
 dependencies = [
  "cfg-if",
  "getrandom 0.2.15",
@@ -5683,6 +5700,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
+name = "utoipa"
+version = "5.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "435c6f69ef38c9017b4b4eea965dfb91e71e53d869e896db40d1cf2441dd75c0"
+dependencies = [
+ "indexmap 2.7.1",
+ "serde",
+ "serde_json",
+ "utoipa-gen",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "5.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a77d306bc75294fd52f3e99b13ece67c02c1a2789190a6f31d32f736624326f7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
+]
+
+[[package]]
 name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5721,12 +5761,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "virtue"
-version = "0.0.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9dcc60c0624df774c82a0ef104151231d37da4962957d691c011c852b2473314"
 
 [[package]]
 name = "wait-timeout"
