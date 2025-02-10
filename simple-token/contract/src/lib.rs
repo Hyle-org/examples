@@ -1,4 +1,12 @@
-use std::collections::BTreeMap;
+#![no_std]
+
+extern crate alloc;
+
+use alloc::{
+    collections::btree_map::BTreeMap,
+    format,
+    string::{String, ToString},
+};
 
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
