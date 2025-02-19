@@ -91,10 +91,7 @@ async fn main() -> anyhow::Result<()> {
                 contract_name: contract_name.clone().into(),
                 data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
-            let blob_tx = BlobTransaction {
-                identity: identity.into(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(identity, blobs.clone());
 
             println!("blob_tx: {:#?}", blob_tx);
             // Send the blob transaction
@@ -107,7 +104,7 @@ async fn main() -> anyhow::Result<()> {
             // Build the contract input
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
-                identity: blob_tx.identity,
+                identity: blob_tx.identity.clone(),
                 tx_hash: blob_tx_hash,
                 private_input: password.into_bytes().to_vec(),
                 blobs: blobs.clone(),
@@ -156,10 +153,7 @@ async fn main() -> anyhow::Result<()> {
                 contract_name: contract_name.clone().into(),
                 data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
-            let blob_tx = BlobTransaction {
-                identity: identity.into(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
             println!("blob_tx: {:#?}", blob_tx);
             // Send the blob transaction
@@ -172,7 +166,7 @@ async fn main() -> anyhow::Result<()> {
             // Build the contract input
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
-                identity: blob_tx.identity,
+                identity: blob_tx.identity.clone(),
                 tx_hash: blob_tx_hash,
                 private_input: password.into_bytes().to_vec(),
                 blobs: blobs.clone(),
@@ -201,4 +195,3 @@ async fn main() -> anyhow::Result<()> {
     }
     Ok(())
 }
-

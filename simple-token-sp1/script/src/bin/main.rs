@@ -113,10 +113,7 @@ async fn main() -> anyhow::Result<()> {
             };
             println!("Action: {:#?}", action);
             let blobs = vec![action.as_blob(contract_name.clone().into(), None, None)];
-            let blob_tx = BlobTransaction {
-                identity: from.clone().into(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(from.clone(), blobs.clone());
 
             println!("blob_tx: {:#?}", blob_tx);
             // Send the blob transaction

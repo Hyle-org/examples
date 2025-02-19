@@ -96,10 +96,7 @@ async fn main() {
                 contract_name: contract_name.clone().into(),
                 data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
-            let blob_tx = BlobTransaction {
-                identity: identity.into(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
             // Send the blob transaction
             let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
@@ -109,10 +106,12 @@ async fn main() {
             // Prove the state transition
             // ----
 
+            let identity = blob_tx.identity.clone();
+
             // Build the contract input
             let inputs = ContractInput {
                 initial_state: initial_state.as_digest(),
-                identity: blob_tx.identity,
+                identity,
                 tx_hash: blob_tx_hash,
                 private_input: password.into_bytes().to_vec(),
                 tx_ctx: None,
@@ -157,10 +156,7 @@ async fn main() {
                     contract_name: contract_name.clone().into(),
                     data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
                 }];
-                let blob_tx = BlobTransaction {
-                    identity: identity.into(),
-                    blobs: blobs.clone(),
-                };
+                let blob_tx = BlobTransaction::new(identity, blobs.clone());
 
                 // Send the blob transaction
                 let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
@@ -173,7 +169,7 @@ async fn main() {
                 // Build the contract input
                 let inputs = ContractInput {
                     initial_state: initial_state.as_digest(),
-                    identity: blob_tx.identity,
+                    identity: blob_tx.identity.clone(),
                     tx_hash: blob_tx_hash.clone(),
                     private_input: password.into_bytes().to_vec(),
                     tx_ctx: None,

@@ -136,10 +136,7 @@ async fn main() {
 
             println!("Blobs {:?}", blobs.clone());
 
-            let blob_tx = BlobTransaction {
-                identity: identity.clone(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
 
             // Send the blob transaction
             let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();

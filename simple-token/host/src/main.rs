@@ -113,10 +113,7 @@ async fn main() {
                 contract_name: contract_name.clone().into(),
                 data: sdk::BlobData(borsh::to_vec(&action).expect("failed to encode BlobData")),
             }];
-            let blob_tx = BlobTransaction {
-                identity: from.clone().into(),
-                blobs: blobs.clone(),
-            };
+            let blob_tx = BlobTransaction::new(from.clone(), blobs.clone());
 
             // Send the blob transaction
             let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
