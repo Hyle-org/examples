@@ -112,7 +112,10 @@ Let's try with *alice*:
 cargo run -- --contract-name ticket-app --user alice.id buy-ticket
 ```
 
-You will get an error while executing the TicketApp program: `Execution failed ! Program output: Insufficient balance`. This is because Alice has a balance of 10 and the ticket costs 15.
+Alice has insufficient balance, so the buy-ticket blob will have a failure proof and the node will print
+
+> INFO hyle::node_state ⛈️  Settled tx [...] has failed
+
 
 ### Executing the Project Locally in Development Mode
 

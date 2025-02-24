@@ -1,27 +1,27 @@
 use std::collections::BTreeMap;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{io::Error, BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-use sdk::{identity_provider::IdentityVerification, Digestable, RunResult};
+use sdk::{identity_provider::IdentityVerification, Digestable, HyleContract, RunResult};
 use sha2::{Digest, Sha256};
 
-/// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> RunResult<IdentityContractState> {
-    // Parse contract inputs
-    let (input, action) =
-        sdk::guest::init_raw::<sdk::identity_provider::IdentityAction>(contract_input);
+impl HyleContract for IdentityContractState {
+    /// Entry point of the contract's logic
+    fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
+        // Parse contract inputs
+        let (action, ctx) = sdk::utils::parse_raw_contract_input::<
+            sdk::identity_provider::IdentityAction,
+        >(contract_input)?;
 
-    let action = action.ok_or("Failed to parse action")?;
+        // Extract private information
+        let password = core::str::from_utf8(&contract_input.private_input).unwrap();
 
-    // Parse initial state
-    let state: IdentityContractState = input.initial_state.clone().into();
+        // Execute the given action
+        let res = self.execute_identity_action(action, password)?;
 
-    // Extract private information
-    let password = core::str::from_utf8(&input.private_input).unwrap();
-
-    // Execute the given action
-    sdk::identity_provider::execute_action(state, action, password)
+        Ok((res, ctx, vec![]))
+    }
 }
 
 /// Struct to hold account's information
@@ -48,6 +48,10 @@ impl IdentityContractState {
     pub fn get_nonce(&self, username: &str) -> Result<u32, &'static str> {
         let info = self.identities.get(username).ok_or("Identity not found")?;
         Ok(info.nonce)
+    }
+
+    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+        borsh::to_vec(self)
     }
 }
 

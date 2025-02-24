@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 use client_sdk::helpers::risc0::Risc0Prover;
-use contract::TokenContractState;
+use contract::SimpleToken;
 use contract_ticket_app::TicketAppAction;
 use contract_ticket_app::TicketAppState;
 use sdk::api::APIRegisterContract;
@@ -148,7 +148,7 @@ async fn main() {
 
             // Build the contract input
             let inputs = ContractInput {
-                initial_state: initial_state.as_digest(),
+                state: initial_state.as_bytes().unwrap(),
                 identity: identity.clone(),
                 tx_hash: blob_tx_hash.clone().into(),
                 private_input: vec![],
@@ -173,7 +173,7 @@ async fn main() {
             println!("Running and proving Transfer blob");
 
             // Build the transfer a input
-            let initial_state_a: TokenContractState = client
+            let initial_state_a: SimpleToken = client
                 .get_contract(&initial_state.ticket_price.0.clone().into())
                 .await
                 .unwrap()
@@ -181,7 +181,7 @@ async fn main() {
                 .into();
 
             let inputs = ContractInput {
-                initial_state: initial_state_a.as_digest(),
+                state: initial_state_a.as_bytes().unwrap(),
                 identity: identity.clone(),
                 tx_hash: blob_tx_hash.clone().into(),
                 private_input: vec![],
@@ -214,7 +214,7 @@ async fn main() {
 
             // Build the contract input
             let inputs = ContractInput {
-                initial_state: initial_state_id.as_digest(),
+                state: initial_state_id.as_bytes().unwrap(),
                 identity: identity.clone(),
                 tx_hash: blob_tx_hash.clone().into(),
                 private_input: cli.pass.into_bytes().to_vec(),

@@ -6,43 +6,36 @@ use alloc::{
     collections::btree_map::BTreeMap,
     format,
     string::{String, ToString},
+    vec::Vec,
 };
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::{io::Error, BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-use sdk::{erc20::ERC20, Digestable, Identity, RunResult};
+use sdk::{erc20::ERC20, Digestable, HyleContract, RunResult};
 
-/// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> RunResult<TokenContract> {
-    // Parse contract inputs
-    let (input, action) = sdk::guest::init_raw::<sdk::erc20::ERC20Action>(contract_input);
+impl HyleContract for SimpleToken {
+    /// Entry point of the contract's logic
+    fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
+        // Parse contract inputs
+        let (action, ctx) =
+            sdk::utils::parse_raw_contract_input::<sdk::erc20::ERC20Action>(contract_input)?;
 
-    let action = action.ok_or("Failed to parse action")?;
+        // Execute the given action
+        let res = self.execute_token_action(action, &ctx)?;
 
-    // Parse initial state as Token
-    let state: TokenContractState = input.initial_state.clone().into();
-
-    // Execute the given action
-    let contract = TokenContract::init(state, input.identity.clone());
-    sdk::erc20::execute_action(contract, action)
+        Ok((res, ctx, alloc::vec![]))
+    }
 }
 
 /// The state of the contract, that is totally serialized on-chain
 #[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug, Clone)]
-pub struct TokenContractState {
+pub struct SimpleToken {
     total_supply: u128,
     balances: BTreeMap<String, u128>, // Balances for each account
 }
 
-/// A struct that holds the logic of the contract
-#[derive(Debug)]
-pub struct TokenContract {
-    state: TokenContractState,
-    caller: Identity,
-}
-
-impl TokenContractState {
+impl SimpleToken {
     /// Creates a new token with the specified initial supply.
     ///
     /// # Arguments
@@ -55,25 +48,14 @@ impl TokenContractState {
     pub fn new(initial_supply: u128, faucet_id: String) -> Self {
         let mut balances = BTreeMap::new();
         balances.insert(faucet_id, initial_supply); // Assign initial supply to faucet
-        TokenContractState {
+        SimpleToken {
             total_supply: initial_supply,
             balances,
         }
     }
-}
 
-impl TokenContract {
-    pub fn init(state: TokenContractState, caller: Identity) -> TokenContract {
-        TokenContract { state, caller }
-    }
-    pub fn state(self) -> TokenContractState {
-        self.state
-    }
-}
-
-impl TokenContract {
-    fn caller(&self) -> &Identity {
-        &self.caller
+    pub fn as_bytes(&self) -> Result<Vec<u8>, Error> {
+        borsh::to_vec(self)
     }
 }
 
@@ -82,47 +64,42 @@ impl TokenContract {
 // but you could do the same logic without it.
 /// A more feature-complete implementation is available in hyle repo
 /// under crates/contracts/hyllar
-impl ERC20 for TokenContract {
+impl ERC20 for SimpleToken {
     fn total_supply(&self) -> Result<u128, String> {
-        Ok(self.state.total_supply)
+        Ok(self.total_supply)
     }
 
     fn balance_of(&self, account: &str) -> Result<u128, String> {
-        match self.state.balances.get(account) {
+        match self.balances.get(account) {
             Some(&balance) => Ok(balance),
             None => Err(format!("Account {account} not found")),
         }
     }
 
-    fn transfer(&mut self, recipient: &str, amount: u128) -> Result<(), String> {
-        let sender = self.caller();
-        let sender = sender.0.as_str();
+    fn transfer(&mut self, sender: &str, recipient: &str, amount: u128) -> Result<(), String> {
         let sender_balance = self.balance_of(sender)?;
 
         if sender_balance < amount {
             return Err("Insufficient balance".to_string());
         }
 
-        *self.state.balances.entry(sender.to_string()).or_insert(0) -= amount;
-        *self
-            .state
-            .balances
-            .entry(recipient.to_string())
-            .or_insert(0) += amount;
+        *self.balances.entry(sender.to_string()).or_insert(0) -= amount;
+        *self.balances.entry(recipient.to_string()).or_insert(0) += amount;
 
         Ok(())
     }
 
     fn transfer_from(
         &mut self,
-        _sender: &str,
+        _owner: &str,
+        _spender: &str,
         _recipient: &str,
         _amount: u128,
     ) -> Result<(), String> {
         todo!()
     }
 
-    fn approve(&mut self, _spender: &str, _amount: u128) -> Result<(), String> {
+    fn approve(&mut self, _owner: &str, _spender: &str, _amount: u128) -> Result<(), String> {
         todo!()
     }
 
@@ -134,20 +111,15 @@ impl ERC20 for TokenContract {
 /// Helpers to transform the contrat's state in its on-chain state digest version.
 /// In an optimal version, you would here only returns a hash of the state,
 /// while storing the full-state off-chain
-impl Digestable for TokenContractState {
+impl Digestable for SimpleToken {
     fn as_digest(&self) -> sdk::StateDigest {
         sdk::StateDigest(borsh::to_vec(self).expect("Failed to encode Balances"))
     }
 }
-impl From<sdk::StateDigest> for TokenContractState {
+impl From<sdk::StateDigest> for SimpleToken {
     fn from(state: sdk::StateDigest) -> Self {
         borsh::from_slice(&state.0)
             .map_err(|_| "Could not decode hyllar state".to_string())
             .unwrap()
-    }
-}
-impl Digestable for TokenContract {
-    fn as_digest(&self) -> sdk::StateDigest {
-        self.state.as_digest()
     }
 }

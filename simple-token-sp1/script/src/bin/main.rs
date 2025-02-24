@@ -1,6 +1,5 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use contract::TokenContract;
 use contract::TokenContractState;
 use sdk::erc20::ERC20;
 use sdk::BlobTransaction;
@@ -88,8 +87,7 @@ async fn main() -> anyhow::Result<()> {
                 .state
                 .into();
 
-            let contract = TokenContract::init(state, "".into());
-            let balance = contract
+            let balance = state
                 .balance_of(&of)
                 .map_err(|e| anyhow::anyhow!(e))
                 .context("failed to fetch balance")?;
@@ -129,7 +127,7 @@ async fn main() -> anyhow::Result<()> {
 
             // Build the contract input
             let inputs = ContractInput {
-                initial_state: initial_state.as_digest(),
+                state: initial_state.as_bytes()?,
                 identity: from.clone().into(),
                 tx_hash: blob_tx_hash,
                 private_input: vec![],

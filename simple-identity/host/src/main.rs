@@ -110,7 +110,7 @@ async fn main() {
 
             // Build the contract input
             let inputs = ContractInput {
-                initial_state: initial_state.as_digest(),
+                state: initial_state.as_bytes().unwrap(),
                 identity,
                 tx_hash: blob_tx_hash,
                 private_input: password.into_bytes().to_vec(),
@@ -168,7 +168,7 @@ async fn main() {
 
                 // Build the contract input
                 let inputs = ContractInput {
-                    initial_state: initial_state.as_digest(),
+                    state: initial_state.as_bytes().unwrap(),
                     identity: blob_tx.identity.clone(),
                     tx_hash: blob_tx_hash.clone(),
                     private_input: password.into_bytes().to_vec(),
