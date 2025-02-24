@@ -2,18 +2,16 @@
 
 extern crate alloc;
 
-use sdk::guest::commit;
+use contract::IdentityContractState;
+use sdk::guest::execute;
 use sdk::guest::GuestEnv;
 use sdk::guest::SP1Env;
-
-use contract::execute;
-use sdk::ContractInput;
 
 sp1_zkvm::entrypoint!(main);
 
 fn main() {
     let env = SP1Env {};
-    let input: ContractInput = env.read();
-    commit(env, input.clone(), execute(input));
+    let input = env.read();
+    let (_, output) = execute::<IdentityContractState>(&input);
+    env.commit(&output);
 }
-

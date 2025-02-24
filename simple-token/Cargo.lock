@@ -105,9 +105,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34ac096ce696dc2fcabef30516bb13c0a68a11d30131d3df6f04711467681b04"
+checksum = "6b964d184e89d9b6b67dd2715bc8e74cf3107fb2b529990c90cf517326150bf4"
 
 [[package]]
 name = "ark-bn254"
@@ -441,8 +441,8 @@ dependencies = [
 
 [[package]]
 name = "bonsai-runner"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "anyhow",
  "axum",
@@ -461,9 +461,9 @@ dependencies = [
 
 [[package]]
 name = "bonsai-sdk"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e274325e6251c944fad96881a9744d82d6cee67244e284f62ebd1d4ede287bd"
+checksum = "758a880c4d654ade8df6e786b663b542a9e31b351591c79a433830217d45f10a"
 dependencies = [
  "duplicate",
  "maybe-async",
@@ -645,8 +645,8 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
 name = "client-sdk"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "anyhow",
  "bonsai-runner",
@@ -1210,8 +1210,8 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "borsh",
  "hyle-model",
@@ -1220,8 +1220,8 @@ dependencies = [
 
 [[package]]
 name = "hyle-model"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "anyhow",
  "base64",
@@ -2244,9 +2244,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-binfmt"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc047ec0ec944104bf94cf55efa3a697aca63cff506cc949ec8d345c48ef0706"
+checksum = "8b077091fadca2535fcb9a433e71f08a40e3c29d6a1f89c1ef0de6645e82540b"
 dependencies = [
  "anyhow",
  "borsh",
@@ -2259,9 +2259,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-build"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2336678ab6701f737522f153050c8c688860a2db29ef8fea7a42ae0a1de614d6"
+checksum = "c68b9039b5cafa149085d978a51673d0bd00908a27ce679bbc9c6ac182546025"
 dependencies = [
  "anyhow",
  "cargo_metadata",
@@ -2325,9 +2325,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-core"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a3ba5078ac767bb5cf35505e6d4da24eff76807fa73bb6ffb88e794654dd4dc"
+checksum = "d56db5c9390a9e51c150d406b780110acad7f0d97886406a89dcfdab1f832ad8"
 dependencies = [
  "bytemuck",
  "rand_core",
@@ -2356,9 +2356,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-zkp"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53e429d1cdb86a702eba04a02b3929bdd62a9a1859ec23b281ba2a8d0c6f418f"
+checksum = "ca0b6424c1a31f0fd8f82b8c4e4b71a37033f4acac6aedee83131c5be674d1c7"
 dependencies = [
  "anyhow",
  "blake2",
@@ -2414,9 +2414,9 @@ dependencies = [
 
 [[package]]
 name = "risc0-zkvm-platform"
-version = "1.2.3"
+version = "1.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3707a298cacf4d665258b9e976d422401dcfe833f50794fa1e7c20d15ab45e7f"
+checksum = "6b81a773bbaae6f499c0c82a4d29a5aa205b542c47cb062b738085603e51e682"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -2573,18 +2573,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.217"
+version = "1.0.218"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02fc4265df13d6fa1d00ecff087228cc0a2b5f3c0e87e258d8b94a156e984c70"
+checksum = "e8dfc9d19bdbf6d17e22319da49161d5d0108e4188e8b680aef6299eed22df60"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.217"
+version = "1.0.218"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a9bf7cf98d04a2b28aead066b7496853d4779c9cc183c440dbac457641e19a0"
+checksum = "f09503e191f4e797cb8aac08e9a4a4695c5edf6a2e70e376d961ddd5c969f82b"
 dependencies = [
  "proc-macro2",
  "quote",

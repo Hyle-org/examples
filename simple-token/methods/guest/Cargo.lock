@@ -491,8 +491,8 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hyle-contract-sdk"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "borsh",
  "hyle-model",
@@ -502,8 +502,8 @@ dependencies = [
 
 [[package]]
 name = "hyle-model"
-version = "0.11.0"
-source = "git+https://github.com/hyle-org/hyle?tag=v0.11.0#57373afcbf3d9d32cf8127a1af8f44fc0f34f822"
+version = "0.12.1"
+source = "git+https://github.com/hyle-org/hyle?tag=v0.12.1#022dc80701930cbcd4ab9aca379d2bf71aa870cd"
 dependencies = [
  "borsh",
  "hex",

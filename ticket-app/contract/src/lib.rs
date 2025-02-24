@@ -1,55 +1,39 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-use sdk::{erc20::ERC20Action, BlobIndex, ContractName, Digestable, Identity, RunResult};
+use sdk::{
+    caller::ExecutionContext, erc20::ERC20Action, BlobIndex, ContractName, Digestable,
+    HyleContract, Identity, RunResult,
+};
 
-/// Entry point of the contract's logic
-pub fn execute(contract_input: sdk::ContractInput) -> RunResult<TicketAppContract> {
-    let (input, ticket_app_action) = sdk::guest::init_raw::<TicketAppAction>(contract_input);
-    let ticket_app_contract_name = input
-        .blobs
-        .get(input.index.0)
-        .unwrap()
-        .contract_name
-        .clone();
-    let ticket_app_action = ticket_app_action.ok_or("failed to parse action")?;
+impl HyleContract for TicketAppState {
+    /// Entry point of the contract's logic
+    fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
+        let (ticket_app_action, ctx) =
+            sdk::utils::parse_raw_contract_input::<TicketAppAction>(contract_input)?;
 
-    let transfer_action =
-        sdk::utils::parse_blob::<ERC20Action>(input.blobs.as_slice(), &BlobIndex(1))
-            .ok_or("failed to parse action")?;
+        let transfer_action =
+            sdk::utils::parse_blob::<ERC20Action>(contract_input.blobs.as_slice(), &BlobIndex(1))
+                .ok_or("failed to parse action")?;
 
-    let transfer_action_contract_name = input.blobs.get(1).unwrap().contract_name.clone();
+        let transfer_action_contract_name =
+            contract_input.blobs.get(1).unwrap().contract_name.clone();
 
-    let ticket_app_state = input.initial_state.clone().into();
+        let res = match ticket_app_action {
+            TicketAppAction::BuyTicket {} => {
+                self.buy_ticket(&ctx, transfer_action, transfer_action_contract_name)?
+            }
+            TicketAppAction::HasTicket {} => self.has_ticket(&ctx)?,
+        };
 
-    let mut ticket_app_contract = TicketAppContract::new(
-        input.identity.clone(),
-        ticket_app_contract_name,
-        ticket_app_state,
-    );
-
-    let res = match ticket_app_action {
-        TicketAppAction::BuyTicket {} => {
-            ticket_app_contract.buy_ticket(transfer_action, transfer_action_contract_name)
-        }
-        TicketAppAction::HasTicket {} => ticket_app_contract.has_ticket(),
-    };
-
-    res.map(|output| (output, ticket_app_contract, vec![]))
+        Ok((res, ctx, vec![]))
+    }
 }
-
 /// Enum representing the actions that can be performed by the Amm contract.
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub enum TicketAppAction {
     BuyTicket {},
     HasTicket {},
-}
-
-/// A struct that holds the logic of the contract
-pub struct TicketAppContract {
-    identity: Identity,
-    contract_name: ContractName,
-    pub state: TicketAppState,
 }
 
 /// The state of the contract, that is totally serialized on-chain
@@ -66,74 +50,69 @@ impl TicketAppState {
             ticket_price,
         }
     }
-}
-
-impl TicketAppContract {
-    pub fn new(identity: Identity, contract_name: ContractName, state: TicketAppState) -> Self {
-        TicketAppContract {
-            identity,
-            contract_name,
-            state,
-        }
-    }
 
     pub fn buy_ticket(
         &mut self,
+        ctx: &ExecutionContext,
         erc20_action: ERC20Action,
         erc20_name: ContractName,
     ) -> Result<String, String> {
         // Check that a blob exists matching the given action, pop it from the callee blobs.
 
-        if self.state.tickets.contains(&self.identity) {
-            return Err(format!("Ticket already present for {:?}", &self.identity));
+        if self.tickets.contains(&ctx.caller) {
+            return Err(format!("Ticket already present for {:?}", &ctx.caller));
         }
 
         match erc20_action {
             ERC20Action::Transfer { recipient, amount } => {
-                if recipient != self.contract_name.0 {
+                if recipient != ctx.contract_name.0 {
                     return Err(format!(
                         "Transfer recipient should be {} but was {}",
-                        self.contract_name, &recipient
+                        ctx.contract_name, &recipient
                     ));
                 }
 
-                if self.state.ticket_price.0 != erc20_name {
+                if self.ticket_price.0 != erc20_name {
                     return Err(format!(
                         "Transfer token should be {} but was {}",
-                        self.state.ticket_price.0, &erc20_name
+                        self.ticket_price.0, &erc20_name
                     ));
                 }
 
-                if amount < self.state.ticket_price.1 {
+                if amount < self.ticket_price.1 {
                     return Err(format!(
                         "Transfer amount should be at least {} but was {}",
-                        self.state.ticket_price.0, &recipient
+                        self.ticket_price.0, &recipient
                     ));
                 }
             }
             els => {
                 return Err(format!(
                     "Wrong ERC20Action, should be a transfer {:?} to {:?} but was {:?}",
-                    self.state.ticket_price, self.contract_name, els
+                    self.ticket_price, ctx.contract_name, els
                 ));
             }
         }
 
-        let program_outputs = format!("Ticket created for {:?}", self.identity.clone());
+        let program_outputs = format!("Ticket created for {:?}", ctx.caller);
 
-        self.state.tickets.push(self.identity.clone());
+        self.tickets.push(ctx.caller.clone());
 
         Ok(program_outputs)
     }
 
-    pub fn has_ticket(&mut self) -> Result<String, String> {
+    pub fn has_ticket(&self, ctx: &ExecutionContext) -> Result<String, String> {
         // Check that a blob exists matching the given action, pop it from the callee blobs.
 
-        if self.state.tickets.contains(&self.identity) {
-            Ok(format!("Ticket present for {:?}", &self.identity))
+        if self.tickets.contains(&ctx.caller) {
+            Ok(format!("Ticket present for {:?}", &ctx.caller))
         } else {
-            Err(format!("No Ticket for {:?}", &self.identity))
+            Err(format!("No Ticket for {:?}", &ctx.caller))
         }
+    }
+
+    pub fn as_bytes(&self) -> Result<Vec<u8>, std::io::Error> {
+        borsh::to_vec(self)
     }
 }
 
@@ -148,10 +127,5 @@ impl Digestable for TicketAppState {
 impl From<sdk::StateDigest> for TicketAppState {
     fn from(state: sdk::StateDigest) -> Self {
         borsh::from_slice(&state.0).expect("Could not decode TicketAppState")
-    }
-}
-impl Digestable for TicketAppContract {
-    fn as_digest(&self) -> sdk::StateDigest {
-        self.state.as_digest()
     }
 }
