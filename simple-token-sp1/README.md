@@ -6,7 +6,7 @@ The logic is very similar to the `simple_token` example (for risc0)
 ## Requirements
 
 - [Rust](https://rustup.rs/)
-- [SP1 4.0.0-rc1](https://docs.succinct.xyz/getting-started/install.html)
+- [SP1 4.1.x](https://docs.succinct.xyz/getting-started/install.html)
 - [A running hyle devnet](https://docs.hyle.eu/developers/quickstart/devnet/)
 
 ## Running the Project

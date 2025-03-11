@@ -1,13 +1,13 @@
 use anyhow::Context;
 use clap::{Parser, Subcommand};
-use contract::TokenContractState;
-use sdk::erc20::ERC20;
+use client_sdk::helpers::sp1::SP1Prover;
+use contract::{SimpleToken, SimpleTokenAction};
 use sdk::BlobTransaction;
 use sdk::ContractAction;
 use sdk::ProofTransaction;
-use sdk::{ContractInput, Digestable};
+use sdk::{ContractInput, HyleContract};
 
-use sp1_sdk::{include_elf, ProverClient};
+use sp1_sdk::include_elf;
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 pub const CONTRACT_ELF: &[u8] = include_elf!("simple_token");
@@ -54,24 +54,23 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_name = &cli.contract_name;
 
+    println!("🚀 Booting sp1...");
+    let prover = SP1Prover::new(CONTRACT_ELF);
+
     match cli.command {
         Commands::Register { supply } => {
             // Build initial state of contract
-            let initial_state =
-                TokenContractState::new(supply, format!("faucet.{}", contract_name));
+            let initial_state = SimpleToken::new(supply, format!("faucet.{}", contract_name));
             println!("Initial state: {:?}", initial_state);
 
-            let prover_client = ProverClient::from_env();
-            let (_, vk) = prover_client.setup(CONTRACT_ELF);
-
-            let vk = serde_json::to_vec(&vk).unwrap();
+            let vk = serde_json::to_vec(&prover.vk).unwrap();
 
             // Send the transaction to register the contract
             let res = client
                 .register_contract(&sdk::api::APIRegisterContract {
-                    verifier: "sp1".into(),
+                    verifier: "sp1-4".into(),
                     program_id: sdk::ProgramId(vk),
-                    state_digest: initial_state.as_digest(),
+                    state_commitment: initial_state.commit(),
                     contract_name: contract_name.clone().into(),
                 })
                 .await?;
@@ -80,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::Balance { of } => {
             // Fetch the state from the node
-            let state: TokenContractState = client
+            let state: SimpleToken = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .context("failed to get contract")?
@@ -95,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
         }
         Commands::Transfer { from, to, amount } => {
             // Fetch the initial state from the node
-            let initial_state: TokenContractState = client
+            let initial_state: SimpleToken = client
                 .get_contract(&contract_name.clone().into())
                 .await
                 .context("failed to get contract")?
@@ -105,7 +104,7 @@ async fn main() -> anyhow::Result<()> {
             // Build the blob transaction
             // ----
 
-            let action = sdk::erc20::ERC20Action::Transfer {
+            let action = SimpleTokenAction::Transfer {
                 recipient: to.clone(),
                 amount,
             };
@@ -140,8 +139,7 @@ async fn main() -> anyhow::Result<()> {
 
             // Generate the zk proof
             println!("🔍 Proving state transition...");
-            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs)
-                .context("failed to prove")?;
+            let proof = prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,

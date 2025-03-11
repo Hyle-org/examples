@@ -1,20 +1,20 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-use sdk::{
-    caller::ExecutionContext, erc20::ERC20Action, BlobIndex, ContractName, Digestable,
-    HyleContract, Identity, RunResult,
-};
+use sdk::{caller::ExecutionContext, BlobIndex, ContractName, Identity, RunResult};
+use simple_token::SimpleTokenAction;
 
-impl HyleContract for TicketAppState {
+impl sdk::HyleContract for TicketAppState {
     /// Entry point of the contract's logic
     fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
         let (ticket_app_action, ctx) =
             sdk::utils::parse_raw_contract_input::<TicketAppAction>(contract_input)?;
 
-        let transfer_action =
-            sdk::utils::parse_blob::<ERC20Action>(contract_input.blobs.as_slice(), &BlobIndex(1))
-                .ok_or("failed to parse action")?;
+        let transfer_action = sdk::utils::parse_blob::<SimpleTokenAction>(
+            contract_input.blobs.as_slice(),
+            &BlobIndex(1),
+        )
+        .ok_or("failed to parse action")?;
 
         let transfer_action_contract_name =
             contract_input.blobs.get(1).unwrap().contract_name.clone();
@@ -27,6 +27,11 @@ impl HyleContract for TicketAppState {
         };
 
         Ok((res, ctx, vec![]))
+    }
+
+    /// In this example, we serialize the full state on-chain.
+    fn commit(&self) -> sdk::StateCommitment {
+        sdk::StateCommitment(borsh::to_vec(self).expect("Failed to encode TicketAppState"))
     }
 }
 /// Enum representing the actions that can be performed by the Amm contract.
@@ -54,7 +59,7 @@ impl TicketAppState {
     pub fn buy_ticket(
         &mut self,
         ctx: &ExecutionContext,
-        erc20_action: ERC20Action,
+        erc20_action: SimpleTokenAction,
         erc20_name: ContractName,
     ) -> Result<String, String> {
         // Check that a blob exists matching the given action, pop it from the callee blobs.
@@ -64,7 +69,7 @@ impl TicketAppState {
         }
 
         match erc20_action {
-            ERC20Action::Transfer { recipient, amount } => {
+            SimpleTokenAction::Transfer { recipient, amount } => {
                 if recipient != ctx.contract_name.0 {
                     return Err(format!(
                         "Transfer recipient should be {} but was {}",
@@ -85,12 +90,6 @@ impl TicketAppState {
                         self.ticket_price.0, &recipient
                     ));
                 }
-            }
-            els => {
-                return Err(format!(
-                    "Wrong ERC20Action, should be a transfer {:?} to {:?} but was {:?}",
-                    self.ticket_price, ctx.contract_name, els
-                ));
             }
         }
 
@@ -116,16 +115,8 @@ impl TicketAppState {
     }
 }
 
-/// Helpers to transform the contrat's state in its on-chain state digest version.
-/// In an optimal version, you would here only returns a hash of the state,
-/// while storing the full-state off-chain
-impl Digestable for TicketAppState {
-    fn as_digest(&self) -> sdk::StateDigest {
-        sdk::StateDigest(borsh::to_vec(self).expect("Failed to encode TicketAppState"))
-    }
-}
-impl From<sdk::StateDigest> for TicketAppState {
-    fn from(state: sdk::StateDigest) -> Self {
+impl From<sdk::StateCommitment> for TicketAppState {
+    fn from(state: sdk::StateCommitment) -> Self {
         borsh::from_slice(&state.0).expect("Could not decode TicketAppState")
     }
 }

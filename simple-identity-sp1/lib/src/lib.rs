@@ -3,13 +3,10 @@ use std::collections::BTreeMap;
 use borsh::{io::Error, BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-use sdk::{
-    identity_provider::{IdentityAction, IdentityVerification},
-    Digestable, HyleContract, RunResult,
-};
+use sdk::RunResult;
 use sha2::{Digest, Sha256};
 
-impl HyleContract for IdentityContractState {
+impl sdk::HyleContract for IdentityContractState {
     /// Entry point of the contract's logic
     fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
         // Parse contract inputs
@@ -19,9 +16,21 @@ impl HyleContract for IdentityContractState {
         let password = core::str::from_utf8(&contract_input.private_input).unwrap();
 
         // Execute the given action
-        let res = self.execute_identity_action(action, password)?;
+        let res = match action {
+            IdentityAction::RegisterIdentity { account } => {
+                self.register_identity(&account, password)?
+            }
+            IdentityAction::VerifyIdentity { account, nonce } => {
+                self.verify_identity(&account, nonce, password)?
+            }
+        };
 
         Ok((res, ctx, vec![]))
+    }
+
+    /// In this example, we serialize the full state on-chain.
+    fn commit(&self) -> sdk::StateCommitment {
+        sdk::StateCommitment(borsh::to_vec(&self).expect("Failed to encode state"))
     }
 }
 
@@ -36,6 +45,13 @@ pub struct AccountInfo {
 #[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Debug, Clone)]
 pub struct IdentityContractState {
     identities: BTreeMap<String, AccountInfo>,
+}
+
+/// Enum representing the actions that can be performed by the IdentityVerification contract.
+#[derive(Serialize, Deserialize, BorshSerialize, BorshDeserialize, Debug, Clone)]
+pub enum IdentityAction {
+    RegisterIdentity { account: String },
+    VerifyIdentity { account: String, nonce: u32 },
 }
 
 /// Some helper methods for the state
@@ -56,15 +72,8 @@ impl IdentityContractState {
     }
 }
 
-// The IdentityVerification trait is implemented for the IdentityContractState struct
-// This trait is given by the sdk, as a "standard" for identity verification contracts
-// but you could do the same logic without it.
-impl IdentityVerification for IdentityContractState {
-    fn register_identity(
-        &mut self,
-        account: &str,
-        private_input: &str,
-    ) -> Result<(), &'static str> {
+impl IdentityContractState {
+    fn register_identity(&mut self, account: &str, private_input: &str) -> Result<String, String> {
         let id = format!("{account}:{private_input}");
         let mut hasher = Sha256::new();
         hasher.update(id.as_bytes());
@@ -79,9 +88,9 @@ impl IdentityVerification for IdentityContractState {
             .insert(account.to_string(), account_info)
             .is_some()
         {
-            return Err("Identity already exists");
+            return Err("Identity already exists".to_string());
         }
-        Ok(())
+        Ok("Successfully registered identity for account: {}".to_string())
     }
 
     fn verify_identity(
@@ -89,30 +98,23 @@ impl IdentityVerification for IdentityContractState {
         account: &str,
         nonce: u32,
         private_input: &str,
-    ) -> Result<bool, &'static str> {
+    ) -> Result<String, String> {
         match self.identities.get_mut(account) {
             Some(stored_info) => {
                 if nonce != stored_info.nonce {
-                    return Err("Invalid nonce");
+                    return Err("Invalid nonce".to_string());
                 }
                 let id = format!("{account}:{private_input}");
                 let mut hasher = Sha256::new();
                 hasher.update(id.as_bytes());
                 let hashed = hex::encode(hasher.finalize());
                 if *stored_info.hash != hashed {
-                    return Ok(false);
+                    return Err("Invalid private input".to_string());
                 }
                 stored_info.nonce += 1;
-                Ok(true)
+                Ok("Identity verified".to_string())
             }
-            None => Err("Identity not found"),
-        }
-    }
-
-    fn get_identity_info(&self, account: &str) -> Result<String, &'static str> {
-        match self.identities.get(account) {
-            Some(info) => Ok(serde_json::to_string(&info).map_err(|_| "Failed to serialize")?),
-            None => Err("Identity not found"),
+            None => Err("Identity not found".to_string()),
         }
     }
 }
@@ -123,16 +125,8 @@ impl Default for IdentityContractState {
     }
 }
 
-/// Helpers to transform the contrat's state in its on-chain state digest version.
-/// In an optimal version, you would here only returns a hash of the state,
-/// while storing the full-state off-chain
-impl Digestable for IdentityContractState {
-    fn as_digest(&self) -> sdk::StateDigest {
-        sdk::StateDigest(borsh::to_vec(self).expect("Failed to encode Balances"))
-    }
-}
-impl From<sdk::StateDigest> for IdentityContractState {
-    fn from(state: sdk::StateDigest) -> Self {
+impl From<sdk::StateCommitment> for IdentityContractState {
+    fn from(state: sdk::StateCommitment) -> Self {
         borsh::from_slice(&state.0)
             .map_err(|_| "Could not decode identity state".to_string())
             .unwrap()

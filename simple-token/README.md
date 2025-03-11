@@ -18,7 +18,7 @@ To build all methods and register the smart contract on the local node [from the
 cargo run -- register 1000
 ```
 
-The expected output is `📝 Registering new contract simple_token`.
+The expected output is `📝 Registering contract simple_token`.
 
 ### Transfer tokens
 

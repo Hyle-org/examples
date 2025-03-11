@@ -1,11 +1,13 @@
 use clap::{Parser, Subcommand};
-use contract::IdentityContractState;
+use client_sdk::helpers::sp1::SP1Prover;
+use contract::{IdentityAction, IdentityContractState};
 use sdk::api::APIRegisterContract;
 use sdk::BlobTransaction;
+use sdk::ContractInput;
+use sdk::HyleContract;
 use sdk::ProofTransaction;
-use sdk::{ContractInput, Digestable};
 
-use sp1_sdk::{include_elf, ProverClient};
+use sp1_sdk::include_elf;
 
 /// The ELF (executable and linkable format) file for the Succinct RISC-V zkVM.
 pub const CONTRACT_ELF: &[u8] = include_elf!("simple_identity");
@@ -49,21 +51,22 @@ async fn main() -> anyhow::Result<()> {
     let client = client_sdk::rest_client::NodeApiHttpClient::new(cli.host).unwrap();
     let contract_name = &cli.contract_name;
 
+    println!("🚀 Booting sp1...");
+    let prover = SP1Prover::new(CONTRACT_ELF);
+
     match cli.command {
         Commands::RegisterContract {} => {
             // Build initial state of contract
             let initial_state = IdentityContractState::new();
             println!("Initial state: {:?}", initial_state);
 
-            let prover_client = ProverClient::from_env();
-            let (_, vk) = prover_client.setup(CONTRACT_ELF);
-            let vk = serde_json::to_vec(&vk).unwrap();
+            let vk = serde_json::to_vec(&prover.vk).unwrap();
 
             // Send the transaction to register the contract
             let register_tx = APIRegisterContract {
-                verifier: "sp1".into(),
+                verifier: "sp1-4".into(),
                 program_id: sdk::ProgramId(vk),
-                state_digest: initial_state.as_digest(),
+                state_commitment: initial_state.commit(),
                 contract_name: contract_name.clone().into(),
             };
             let res = client.register_contract(&register_tx).await.unwrap();
@@ -83,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
             println!("Identity {:?}", identity.clone());
 
             // Build the blob transaction
-            let action = sdk::identity_provider::IdentityAction::RegisterIdentity {
+            let action = IdentityAction::RegisterIdentity {
                 account: identity.clone(),
             };
 
@@ -116,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
 
             // Generate the zk proof
             println!("🔍 Proving state transition...");
-            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs).unwrap();
+            let proof = prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,
@@ -144,7 +147,7 @@ async fn main() -> anyhow::Result<()> {
                 .into();
 
             // Build the blob transaction
-            let action = sdk::identity_provider::IdentityAction::VerifyIdentity {
+            let action = IdentityAction::VerifyIdentity {
                 account: identity.clone(),
                 nonce,
             };
@@ -178,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
 
             // Generate the zk proof
             println!("🔍 Proving state transition...");
-            let (proof, _) = client_sdk::helpers::sp1::prove(CONTRACT_ELF, &inputs).unwrap();
+            let proof = prover.prove(inputs).await.unwrap();
 
             let proof_tx = ProofTransaction {
                 proof,

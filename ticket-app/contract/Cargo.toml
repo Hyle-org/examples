@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 sdk = { workspace = true }
+simple-token = { path = "../../simple-token/contract", package = "contract"}
+
 serde = { version = "1.0", default-features = false, features = [
     "derive",
     "alloc",

@@ -20,7 +20,7 @@ To build all methods and register the smart contract on the local node [from the
 cargo run -- register-contract
 ```
 
-The expected output is `📝 Registering new contract simple_identity`.
+The expected output is `📝 Registering contract simple_identity`.
 
 ### Register an account / Sign up
 

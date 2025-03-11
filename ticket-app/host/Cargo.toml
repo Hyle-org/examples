@@ -13,6 +13,7 @@ contract = { path = "../../simple-token/contract", package = "contract"}
 methods-identity = { path = "../../simple-identity/methods" }
 methods-ticket-app = { path = "../methods" }
 methods = { path = "../../simple-token/methods" }
+
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5.23", features = ["derive"] }
 borsh = "1.5.5"

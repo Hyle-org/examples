@@ -3,8 +3,8 @@ resolver = "2"
 members = ["host", "contract", "methods"]
 
 [workspace.dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", tag = "v0.12.1" } # don't forget to update methods/guest/Cargo.toml 
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "client-sdk", tag = "v0.12.1" }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", tag = "v0.13.0-rc.1" } # don't forget to update methods/guest/Cargo.toml 
+client-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-client-sdk", tag = "v0.13.0-rc.1" }
 
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]
