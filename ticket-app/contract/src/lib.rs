@@ -23,6 +23,9 @@ impl sdk::HyleContract for TicketAppState {
             TicketAppAction::BuyTicket {} => {
                 self.buy_ticket(&ctx, transfer_action, transfer_action_contract_name)?
             }
+            TicketAppAction::RefundTicket {} => {
+                self.refund_ticket(&ctx, transfer_action, transfer_action_contract_name)?
+            }
             TicketAppAction::HasTicket {} => self.has_ticket(&ctx)?,
         };
 
@@ -38,6 +41,7 @@ impl sdk::HyleContract for TicketAppState {
 #[derive(BorshSerialize, BorshDeserialize, Debug, Clone)]
 pub enum TicketAppAction {
     BuyTicket {},
+    RefundTicket {},
     HasTicket {},
 }
 
@@ -96,6 +100,50 @@ impl TicketAppState {
         let program_outputs = format!("Ticket created for {:?}", ctx.caller);
 
         self.tickets.push(ctx.caller.clone());
+
+        Ok(program_outputs)
+    }
+
+    pub fn refund_ticket(
+        &mut self,
+        ctx: &ExecutionContext,
+        erc20_action: SimpleTokenAction,
+        erc20_name: ContractName,
+    ) -> Result<String, String> {
+        // Check that a blob exists matching the given action, pop it from the callee blobs.
+
+        if !self.tickets.contains(&ctx.caller) {
+            return Err(format!("Ticket not present for {:?}", &ctx.caller));
+        }
+
+        match erc20_action {
+            SimpleTokenAction::Transfer { recipient, amount } => {
+                if recipient != ctx.caller.0 {
+                    return Err(format!(
+                        "Transfer recipient should be {} but was {}",
+                        ctx.caller, &recipient
+                    ));
+                }
+
+                if self.ticket_price.0 != erc20_name {
+                    return Err(format!(
+                        "Transfer token should be {} but was {}",
+                        self.ticket_price.0, &erc20_name
+                    ));
+                }
+
+                if amount < self.ticket_price.1 {
+                    return Err(format!(
+                        "Transfer amount should be at least {} but was {}",
+                        self.ticket_price.0, &recipient
+                    ));
+                }
+            }
+        }
+
+        let program_outputs = format!("Ticket refunded for {:?}", ctx.caller);
+
+        self.tickets.remove(self.tickets.iter().position(|id| id == &ctx.caller).unwrap());
 
         Ok(program_outputs)
     }
