@@ -3,6 +3,8 @@ use clap::{Parser, Subcommand};
 use client_sdk::helpers::risc0::Risc0Prover;
 use contract::SimpleToken;
 use contract::SimpleTokenAction;
+// use hyle_hyllar::{Hyllar, HyllarAction};
+// use hyle_contracts::HYLLAR_ELF;
 use contract_identity::IdentityAction;
 use contract_ticket_app::TicketAppAction;
 use contract_ticket_app::TicketAppState;
@@ -46,6 +48,7 @@ struct Cli {
 enum Commands {
     Register { token: String, price: u128 },
     BuyTicket {},
+    RefundTicket {},
     HasTicket {},
 }
 
@@ -65,6 +68,7 @@ async fn main() {
     let ticket_prover = Risc0Prover::new(methods_ticket_app::GUEST_ELF);
     let identity_prover = Risc0Prover::new(methods_identity::GUEST_ELF);
     let token_prover = Risc0Prover::new(methods::GUEST_ELF);
+    // let token_prover = Risc0Prover::new(HYLLAR_ELF);
 
     match cli.command {
         Commands::Register { token, price } => {
@@ -100,7 +104,7 @@ async fn main() {
             println!("Identity {:?}", cli.user.clone());
             println!("Nonce {:?}", cli.nonce.clone());
 
-            let identity = Identity(cli.user.clone());
+            let identity: Identity = Identity(cli.user.clone());
 
             let identity_cf: IdentityAction = IdentityAction::VerifyIdentity {
                 account: identity.0.clone(),
@@ -116,7 +120,7 @@ async fn main() {
                         borsh::to_vec(&identity_cf).expect("Failed to encode Identity action"),
                     ),
                 },
-                // Init pair 0 amount
+                // Init pair 0 amount
                 sdk::Blob {
                     contract_name: initial_state.ticket_price.0.clone(),
                     data: sdk::BlobData(
@@ -174,7 +178,18 @@ async fn main() {
 
             println!("Running and proving Transfer blob");
 
-            // Build the transfer a input
+            // let state_commitment = client
+            //     .get_contract(&initial_state.ticket_price.0.clone().into())
+            //     .await
+            //     .unwrap()
+            //     .state;
+                
+            // // Deserialize the state manually
+            // let initial_state_a: Hyllar = borsh::from_slice(&state_commitment.0)
+            //     .map_err(|_| "Could not decode hyllar state".to_string())
+            //     .unwrap();
+
+            // // Build the transfer a input
             let initial_state_a: SimpleToken = client
                 .get_contract(&initial_state.ticket_price.0.clone().into())
                 .await
@@ -237,6 +252,168 @@ async fn main() {
             let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
         }
+        Commands::RefundTicket {} => {
+            // Build initial state of contract
+            let initial_state: TicketAppState = client
+                .get_contract(&contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            println!("Initial State {:?}", &initial_state);
+            println!("Initial State {:?}", initial_state.commit());
+            println!("Identity {:?}", cli.user.clone());
+            println!("Nonce {:?}", cli.nonce.clone());
+
+            let identity: Identity = Identity(cli.user.clone());
+
+            let identity_cf: IdentityAction = IdentityAction::VerifyIdentity {
+                account: identity.0.clone(),
+                nonce: cli.nonce.parse().unwrap(),
+            };
+
+            let identity_contract_name = cli.user.rsplit_once(".").unwrap().1.to_string();
+
+            let blobs = vec![
+                sdk::Blob {
+                    contract_name: identity_contract_name.clone().into(),
+                    data: sdk::BlobData(
+                        borsh::to_vec(&identity_cf).expect("Failed to encode Identity action"),
+                    ),
+                },
+                sdk::Blob::from(sdk::StructuredBlob {
+                    contract_name: contract_name.clone().into(),
+                    data: sdk::StructuredBlobData {
+                        caller: None,
+                        callees: Some(vec![sdk::BlobIndex(2)]),
+                        parameters: TicketAppAction::RefundTicket {},
+                    },
+                }),
+                sdk::Blob::from(sdk::StructuredBlob {
+                    contract_name: initial_state.ticket_price.0.clone(),
+                    data: sdk::StructuredBlobData {
+                        caller: Some(sdk::BlobIndex(1)),
+                        callees: None,
+                        parameters: SimpleTokenAction::Transfer {
+                            recipient: identity.0.clone(),
+                            amount: initial_state.ticket_price.1,
+                        },
+                    },
+                }),
+            ];
+
+            println!("Blobs {:?}", blobs.clone());
+
+            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
+
+            // Send the blob transaction
+            let blob_tx_hash = client.send_tx_blob(&blob_tx).await.unwrap();
+            println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+
+            // prove tx
+
+            println!("Running and proving TicketApp blob");
+
+            // Build the contract input
+            let inputs = ContractInput {
+                state: initial_state.as_bytes().unwrap(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
+                private_input: vec![],
+                tx_ctx: None,
+                blobs: blobs.clone(),
+                index: sdk::BlobIndex(1),
+            };
+
+            // Generate the zk proof
+            let proof = ticket_prover.prove(inputs).await.unwrap();
+
+            let proof_tx = ProofTransaction {
+                proof,
+                contract_name: contract_name.clone().into(),
+            };
+
+            // Send the proof transaction
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+
+            println!("Running and proving Transfer blob");
+
+            // let state_commitment = client
+            //     .get_contract(&initial_state.ticket_price.0.clone().into())
+            //     .await
+            //     .unwrap()
+            //     .state;
+                
+            // // Deserialize the state manually
+            // let initial_state_a: Hyllar = borsh::from_slice(&state_commitment.0)
+            //     .map_err(|_| "Could not decode hyllar state".to_string())
+            //     .unwrap();
+
+            // Build the transfer a input
+            let initial_state_a: SimpleToken = client
+                .get_contract(&initial_state.ticket_price.0.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            let inputs = ContractInput {
+                state: initial_state_a.as_bytes().unwrap(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
+                private_input: vec![],
+                tx_ctx: None,
+                blobs: blobs.clone(),
+                index: sdk::BlobIndex(2),
+            };
+
+            // Generate the zk proof
+            let proof = token_prover.prove(inputs).await.unwrap();
+
+            let proof_tx = ProofTransaction {
+                proof,
+                contract_name: initial_state.ticket_price.0.clone(),
+            };
+
+            // Send the proof transaction
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+
+            println!("Running and proving Identity blob");
+
+            // Fetch the initial state from the node
+            let initial_state_id: contract_identity::IdentityContractState = client
+                .get_contract(&identity_contract_name.clone().into())
+                .await
+                .unwrap()
+                .state
+                .into();
+
+            // Build the contract input
+            let inputs = ContractInput {
+                state: initial_state_id.as_bytes().unwrap(),
+                identity: identity.clone(),
+                tx_hash: blob_tx_hash.clone().into(),
+                private_input: vec![],
+                tx_ctx: None,
+                blobs: blobs.clone(),
+                index: sdk::BlobIndex(0),
+            };
+
+            // Generate the zk proof
+            let proof = identity_prover.prove(inputs).await.unwrap();
+
+            let proof_tx = ProofTransaction {
+                proof,
+                contract_name: identity_contract_name.clone().into(),
+            };
+
+            // Send the proof transaction
+            let proof_tx_hash = client.send_tx_proof(&proof_tx).await.unwrap();
+            println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+        },
         Commands::HasTicket {} => {
             let initial_state: TicketAppState = client
                 .get_contract(&contract_name.clone().into())
