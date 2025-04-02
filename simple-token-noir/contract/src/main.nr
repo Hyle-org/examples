@@ -9,8 +9,8 @@ fn main(
     next_state: pub [u8; 4],
     identity_len: pub u8,
     identity: pub str<24>,
-    tx_hash_len: pub u32,
-    tx_hash: pub [u8; 0],
+    tx_hash_len: pub u8,
+    tx_hash: pub str<64>,
     index: pub u32,
     blobs_len: pub u32,
     blobs: pub [Field; 2800],
@@ -18,8 +18,6 @@ fn main(
 ) {
     assert(success == true);
     assert(version == 1);
-    assert(tx_hash_len == 0);
-    assert(tx_hash == []);
     assert(identity_len == 24);
     assert(initial_state_len == 4);
     assert(next_state_len == 4);

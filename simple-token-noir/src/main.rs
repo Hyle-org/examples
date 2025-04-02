@@ -1,17 +1,13 @@
 use clap::{Parser, Subcommand};
-use noir_rs::{
-    barretenberg::{
-        prove::prove_ultra_honk,
-        srs::{setup_srs_from_bytecode},
-        verify::verify_ultra_honk,
-        utils::get_honk_verification_key,
-    },
-    witness::from_vec_str_to_witness_map,
-};
 use sdk::api::APIRegisterContract;
-use sdk::{StateCommitment, ProgramId, BlobTransaction, ProofTransaction, ProofData};
-use tracing::info;
+use sdk::{BlobTransaction, ProgramId, ProofData, ProofTransaction, StateCommitment, flatten_blobs};
 use serde::Deserialize;
+use serde_json::json;
+use std::env;
+use std::fs;
+use std::path::Path;
+use toml::to_string_pretty;
+use tracing::{error, info, warn};
 
 #[derive(Deserialize)]
 struct NoirCircuit {
@@ -48,106 +44,322 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Register,
-    Execute {
-        identity: String,
-    },
+    Prove { identity: String },
 }
 
-#[derive(borsh::BorshSerialize)]
-enum SimpleTokenAction {
-    Transfer {
-        recipient: String,
-        amount: u128,
-    },
+#[derive(serde::Serialize)]
+struct ProverData {
+    version: u32,
+    initial_state: Vec<u8>,
+    initial_state_len: u32,
+    next_state: Vec<u8>,
+    next_state_len: u32,
+    identity: String,
+    identity_len: u8,
+    tx_hash: String,
+    tx_hash_len: u32,
+    index: u32,
+    blobs: Vec<String>,
+    blobs_len: u32,
+    success: u32,
+}
+
+fn generate_prover_toml(
+    identity: &str,
+    tx_hash: &str,
+    blobs: &[sdk::Blob],
+) -> Result<String, Box<dyn std::error::Error>> {
+    info!(
+        "Generating Prover.toml with identity: {} and tx_hash: {}",
+        identity, tx_hash
+    );
+
+    // Format blobs according to the parsing logic
+    let mut formatted_blobs = Vec::new();
+    
+    // Add number of blobs
+    formatted_blobs.push(format!("0x{:02x}", blobs.len()));
+    
+    // For each blob, add its size and data
+    for blob in blobs {
+        // Calculate total size (contract name + blob data)
+        let contract_name_bytes = blob.contract_name.0.as_bytes();
+        let total_size = contract_name_bytes.len() + blob.data.0.len();
+        formatted_blobs.push(format!("0x{:02x}", total_size));
+        
+        // Add contract name bytes
+        for &byte in contract_name_bytes {
+            formatted_blobs.push(format!("0x{:02x}", byte));
+        }
+        
+        // Add blob data bytes
+        for &byte in &blob.data.0 {
+            formatted_blobs.push(format!("0x{:02x}", byte));
+        }
+    }
+
+    // Pad to 2800 bytes
+    while formatted_blobs.len() < 2800 {
+        formatted_blobs.push("0x00".to_string());
+    }
+
+    println!("Blob data {:?}", formatted_blobs);
+    println!("Identity: {}", identity);
+    println!("Tx hash: {}", tx_hash);
+
+    let prover_data = ProverData {
+        version: 1,
+        initial_state: vec![0, 0, 0, 0],
+        initial_state_len: 4,
+        next_state: vec![0, 0, 0, 0],
+        next_state_len: 4,
+        identity: identity.to_string(),
+        identity_len: identity.len() as u8,
+        tx_hash: tx_hash.to_string(),
+        tx_hash_len: tx_hash.len() as u32,
+        index: 0,
+        blobs: formatted_blobs.clone(),
+        blobs_len: formatted_blobs.len() as u32,
+        success: 1,
+    };
+
+    let toml = to_string_pretty(&prover_data)?;
+    info!("Prover.toml generated successfully");
+    Ok(toml)
+}
+
+fn generate_verification_key() -> Result<(), Box<dyn std::error::Error>> {
+    info!("Generating verification key...");
+
+    // Generate verification key
+    info!("Generating verification key using bb...");
+    let bb_vk_output = std::process::Command::new("bb")
+        .arg("write_vk")
+        .arg("--scheme")
+        .arg("ultra_honk")
+        .arg("-b")
+        .arg("./contract/target/simple_token_noir.json")
+        .arg("-o")
+        .arg("./contract/target/vk")
+        .output()?;
+
+    if !bb_vk_output.status.success() {
+        error!(
+            "BB write_vk failed: {}",
+            String::from_utf8_lossy(&bb_vk_output.stderr)
+        );
+        return Err(format!(
+            "BB write_vk failed: {}",
+            String::from_utf8_lossy(&bb_vk_output.stderr)
+        )
+        .into());
+    }
+
+    info!("Verification key generated successfully");
+
+     Ok(())
+}
+
+fn execute_proof_generation(
+    identity: &str,
+    tx_hash: &str,
+    blobs: &[sdk::Blob],
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(
+        "Starting proof generation for identity: {} and tx_hash: {}",
+        identity, tx_hash
+    );
+
+    // Store current directory (nargo needs to be executed in the contract directory i believe)
+    let current_dir = env::current_dir()?;
+    info!("Current directory: {}", current_dir.display());
+
+    // Change to contract directory
+    let contract_dir = current_dir.join("contract");
+    info!("Changing to contract directory: {}", contract_dir.display());
+    env::set_current_dir(&contract_dir)?;
+
+    // Create Prover.toml
+    info!("Creating Prover.toml...");
+    let prover_toml = generate_prover_toml(identity, tx_hash, blobs)?;
+    fs::write("Prover.toml", &prover_toml)?;
+    info!("Prover.toml created successfully");
+
+    // Execute nargo
+    info!("Executing nargo...");
+    let nargo_output = std::process::Command::new("nargo")
+        .arg("execute")
+        .arg("-p")
+        .arg("Prover.toml")
+        .output()?;
+
+    if !nargo_output.status.success() {
+        error!(
+            "Nargo execution failed: {}",
+            String::from_utf8_lossy(&nargo_output.stderr)
+        );
+        return Err(format!(
+            "Nargo execution failed: {}",
+            String::from_utf8_lossy(&nargo_output.stderr)
+        )
+        .into());
+    }
+    info!("Nargo execution completed successfully");
+
+    // Generate proof using bb
+    info!("Generating proof using bb...");
+    let bb_prove_output = std::process::Command::new("bb")
+        .arg("prove")
+        .arg("--scheme")
+        .arg("ultra_honk")
+        .arg("-b")
+        .arg("target/simple_token_noir.json")
+        .arg("-w")
+        .arg("target/simple_token_noir.gz")
+        .arg("-o")
+        .arg("./target/proof")
+        .output()?;
+
+    if !bb_prove_output.status.success() {
+        error!(
+            "BB prove failed: {}",
+            String::from_utf8_lossy(&bb_prove_output.stderr)
+        );
+        return Err(format!(
+            "BB prove failed: {}",
+            String::from_utf8_lossy(&bb_prove_output.stderr)
+        )
+        .into());
+    }
+    info!("Proof generated successfully");
+
+    // Change back to original directory
+    env::set_current_dir(&current_dir)?;
+    info!(
+        "Changed back to original directory: {}",
+        current_dir.display()
+    );
+
+    Ok(())
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
+    // Initialize tracing with more detailed format
     tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::filter::EnvFilter::from_default_env())
+        .with_target(false)
+        .with_thread_ids(false)
+        .with_thread_names(false)
+        .with_ansi(true)
         .init();
 
+    info!("Starting simple-token-noir application");
     let cli = Cli::parse();
 
     let client = client_sdk::rest_client::NodeApiHttpClient::new(cli.host)
         .map_err(|e| format!("Failed to create client: {}", e))?;
     let contract_name = &cli.contract_name;
 
-    // Setup Noir prover
-    setup_srs_from_bytecode(BYTECODE.as_str(), None, false)
-        .map_err(|e| format!("Failed to setup SRS: {}", e))?;
-
     match cli.command {
         Commands::Register => {
-            // Get verification key for the circuit
-            let vk = get_honk_verification_key(BYTECODE.as_str(), false)
-                .map_err(|e| format!("Failed to get verification key: {}", e))?;
+            info!("Starting contract registration process");
+            println!("Generating verification key...");
+            generate_verification_key()?;
+            println!("✅ Verification key generated successfully");
+
+            // Read the verification key
+            info!("Reading verification key from file");
+            let vk = fs::read("./contract/target/vk")?;
+            info!(
+                "Verification key read successfully, size: {} bytes",
+                vk.len()
+            );
 
             // Send the transaction to register the contract
+            info!("Sending contract registration transaction");
             let res = client
                 .register_contract(&APIRegisterContract {
-                    verifier: "noir-1".into(),
-                    program_id: ProgramId(vk.to_vec()), // Use verification key as program ID
-                    state_commitment: StateCommitment::default(), // Empty state since contract is stateless
+                    verifier: "noir".into(),
+                    program_id: ProgramId(vk),
+                    state_commitment: StateCommitment(vec![0;4]),
                     contract_name: contract_name.clone().into(),
                 })
                 .await
                 .map_err(|e| format!("Failed to register contract: {}", e))?;
-            println!("✅ Register contract tx sent. Tx hash: {}", res);        }
-        Commands::Execute { identity } => {
+            println!("✅ Register contract tx sent. Tx hash: {}", res);
+            info!("Contract registration completed successfully");
+        }
+        Commands::Prove { identity } => {
+            info!("Starting contract execution process");
+            // Extract just the value part after the equals sign
+            let identity_value = if identity.starts_with("--identity=") {
+                identity.trim_start_matches("--identity=")
+            } else {
+                &identity
+            };
+
+            info!(
+                "Processing identity: {} (length: {})",
+                identity_value,
+                identity_value.len()
+            );
+
+            // TODO: change identity length to a bigger one, and pad it with 0s like blobs
+            if identity_value.len() != 24 {
+                error!("Invalid identity length: {}", identity_value.len());
+                return Err("Identity must be exactly 24 characters long".into());
+            }
+
             // Create an empty blob
-            let blobs = vec![sdk::Blob {
+            info!("Creating blob transaction");
+            let blob_data = vec![0; 4];
+            let blob = sdk::Blob {
                 contract_name: contract_name.clone().into(),
-                data: sdk::BlobData(vec![]),
-            }];
-            let blob_tx = BlobTransaction::new(identity.clone(), blobs.clone());
+                data: sdk::BlobData(blob_data.clone()),
+            };
+            let blobs = vec![blob.clone()];
+            let blob_tx = BlobTransaction::new(identity_value.to_string(), blobs.clone());
 
             // Send the blob transaction
-            let blob_tx_hash = client.send_tx_blob(&blob_tx).await
+            info!("Sending blob transaction");
+            let blob_tx_hash = client
+                .send_tx_blob(&blob_tx)
+                .await
                 .map_err(|e| format!("Failed to send blob transaction: {}", e))?;
             println!("✅ Blob tx sent. Tx hash: {}", blob_tx_hash);
+            info!("Blob transaction sent successfully");
 
-            // Create witness for the proof
-            let witness = from_vec_str_to_witness_map(vec![
-                "1", // version
-                "4", // initial_state_len
-                "0,0,0,0", // initial_state
-                "4", // next_state_len
-                "0,0,0,0", // next_state
-                "24", // identity_len
-                &identity, // identity
-                "0", // tx_hash_len
-                "", // tx_hash (empty)
-                "0", // index
-                "0", // blobs_len
-                "", // blobs (empty)
-                "1", // success
-            ]).map_err(|e| format!("Failed to create witness: {}", e))?;
+            // Create a padded version of the blob for proof generation
+           
+            info!("Starting proof generation with blob tx hash");
+            println!("Generating proof...");
+            execute_proof_generation(identity_value, &blob_tx_hash.0, &blobs)?;
+            println!("✅ Proof generated successfully");
 
-            // Generate the proof
-            let start = std::time::Instant::now();
-            let proof = prove_ultra_honk(BYTECODE.as_str(), witness, false)
-                .map_err(|e| format!("Failed to generate proof: {}", e))?;
-            info!("Proof generation time: {:?}", start.elapsed());
+            // Read the proof
+            info!("Reading generated proof from file");
+            let proof = fs::read("./contract/target/proof")?;
+            info!("Proof read successfully, size: {} bytes", proof.len());
 
-            // Get verification key and verify the proof
-            let vk = get_honk_verification_key(BYTECODE.as_str(), false)
-                .map_err(|e| format!("Failed to get verification key: {}", e))?;
-            let verdict = verify_ultra_honk(proof.clone(), vk)
-                .map_err(|e| format!("Failed to verify proof: {}", e))?;
-            info!("Proof verification verdict: {}", verdict);
-
+            // Create proof transaction with the generated proof
+            info!("Creating proof transaction");
             let proof_tx = ProofTransaction {
-                proof: ProofData(proof.to_vec()),
+                proof: ProofData(proof),
                 contract_name: contract_name.clone().into(),
             };
 
             // Send the proof transaction
-            let proof_tx_hash = client.send_tx_proof(&proof_tx).await
+            info!("Sending proof transaction");
+            let proof_tx_hash = client
+                .send_tx_proof(&proof_tx)
+                .await
                 .map_err(|e| format!("Failed to send proof transaction: {}", e))?;
             println!("✅ Proof tx sent. Tx hash: {}", proof_tx_hash);
+            info!("Proof transaction sent successfully");
         }
+        
     }
+    info!("Application completed successfully");
     Ok(())
 }

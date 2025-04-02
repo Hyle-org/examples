@@ -4,10 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-noir_rs = { git = "https://github.com/zkpassport/noir_rs.git", tag = "v1.0.0-beta.3-1", features=["barretenberg"] }
 
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", tag = "v0.13.0-rc.1" } 
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-client-sdk", tag = "v0.13.0-rc.1", features=["rest"] }
+sdk = { path = "../../hyle/crates/contract-sdk", package = "hyle-contract-sdk" }
+client-sdk = { path = "../../hyle/crates/client-sdk", package = "hyle-client-sdk", features=["rest"] }
 
 clap = { version = "4.4", features = ["derive"] }
 tokio = { version = "1.0", features = ["full"] }
@@ -18,3 +17,4 @@ hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 lazy_static = "1.4"
+toml = "0.8"
