@@ -6,10 +6,19 @@ edition = "2021"
 [dependencies]
 sdk = { workspace = true }
 client-sdk = { workspace = true, features = ["rest", "risc0"] }
-contract-identity = { path = "../contract" }
+hyle = { workspace = true }
+contract-identity = { path = "../contract", features = ["client"] }
 
-methods-identity = { path = "../methods" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5.23", features = ["derive"] }
 borsh = "1.5.5"
 tokio = { version = "1.42.0", features = ["full", "tracing"] }
+hex = "0.4.3"
+anyhow = "1.0"
+
+# TODO: re-export them from hyle to avoid leaking when using macros
+tracing = "0.1.41"
+opentelemetry = { version = "0.28" }
+
+
+zip = "=2.3.0"

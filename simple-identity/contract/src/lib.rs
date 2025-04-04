@@ -6,22 +6,31 @@ use serde::{Deserialize, Serialize};
 use sdk::RunResult;
 use sha2::{Digest, Sha256};
 
+#[cfg(feature = "client")]
+pub mod client;
+
 impl sdk::HyleContract for IdentityContractState {
     /// Entry point of the contract's logic
     fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
         // Parse contract inputs
         let (action, ctx) = sdk::utils::parse_raw_contract_input::<IdentityAction>(contract_input)?;
 
-        // Extract private information
-        let password = core::str::from_utf8(&contract_input.private_input).unwrap();
+        let check_secret = contract_input
+            .blobs
+            .values()
+            .find(|b| b.contract_name.0 == "check-secret")
+            .map(|b| b.data.clone())
+            .expect("Missing check-secret blob");
+
+        let checked_hash = hex::encode(check_secret.0);
 
         // Execute the given action
         let res = match action {
             IdentityAction::RegisterIdentity { account } => {
-                self.register_identity(&account, password)?
+                self.register_identity(account, checked_hash)?
             }
             IdentityAction::VerifyIdentity { account, nonce } => {
-                self.verify_identity(&account, nonce, password)?
+                self.verify_identity(account, nonce, checked_hash)?
             }
         };
 
@@ -73,21 +82,28 @@ impl IdentityContractState {
 }
 
 impl IdentityContractState {
-    fn register_identity(&mut self, account: &str, private_input: &str) -> Result<String, String> {
-        let id = format!("{account}:{private_input}");
+    pub fn build_identity_id(account: &str, password: &str) -> Vec<u8> {
+        // hash password
         let mut hasher = Sha256::new();
-        hasher.update(id.as_bytes());
-        let hash_bytes = hasher.finalize();
-        let account_info = AccountInfo {
-            hash: hex::encode(hash_bytes),
-            nonce: 0,
-        };
+        hasher.update(password.as_bytes());
+        let hashed_password = hasher.finalize();
+        let hashed_password = hashed_password.as_slice();
 
-        if self
-            .identities
-            .insert(account.to_string(), account_info)
-            .is_some()
-        {
+        let id = format!("{:0<64}:", account);
+        let mut id = id.as_bytes().to_vec();
+        id.extend_from_slice(hashed_password);
+
+        let mut hasher = Sha256::new();
+        hasher.update(id);
+        let hash_bytes = hasher.finalize();
+
+        hash_bytes.to_vec()
+    }
+
+    fn register_identity(&mut self, account: String, hash: String) -> Result<String, String> {
+        let account_info = AccountInfo { hash, nonce: 0 };
+
+        if self.identities.insert(account, account_info).is_some() {
             return Err("Identity already exists".to_string());
         }
         Ok("Successfully registered identity for account: {}".to_string())
@@ -95,21 +111,17 @@ impl IdentityContractState {
 
     fn verify_identity(
         &mut self,
-        account: &str,
+        account: String,
         nonce: u32,
-        private_input: &str,
+        hash: String,
     ) -> Result<String, String> {
-        match self.identities.get_mut(account) {
+        match self.identities.get_mut(&account) {
             Some(stored_info) => {
                 if nonce != stored_info.nonce {
                     return Err("Invalid nonce".to_string());
                 }
-                let id = format!("{account}:{private_input}");
-                let mut hasher = Sha256::new();
-                hasher.update(id.as_bytes());
-                let hashed = hex::encode(hasher.finalize());
-                if *stored_info.hash != hashed {
-                    return Err("Invalid private input".to_string());
+                if hash != stored_info.hash {
+                    return Err("Invalid hash (wrong secret check)".to_string());
                 }
                 stored_info.nonce += 1;
                 Ok("Identity verified".to_string())
