@@ -45,6 +45,7 @@ const generateProverData = (
   id: string,
   pwd: Uint8Array,
   stored_hash: Uint8Array,
+  tx: string,
 ): InputMap => {
   const version = 1;
   const initial_state = [0, 0, 0, 0];
@@ -53,7 +54,7 @@ const generateProverData = (
   const next_state_len = next_state.length;
   const identity_len = id.length;
   const identity = id.padEnd(64, "0");
-  const tx_hash = "0x1234567890abcdef".padEnd(64, "0");
+  const tx_hash = tx.padEnd(64, "0");
   const tx_hash_len = tx_hash.length;
   const index = 0;
   const blob_number = 1;
@@ -99,7 +100,7 @@ const register = async (identity: string, storedHash: Uint8Array) => {
     data: Array.from(storedHash),
   };
 
-  await sendBlobTx(identity, [idBlob, secretBlob]);
+  return await sendBlobTx(identity, [/*idBlob,*/ secretBlob]);
 };
 
 const sendProoof = async (proof: Uint8Array) => {
@@ -107,14 +108,14 @@ const sendProoof = async (proof: Uint8Array) => {
     contract_name: "check_secret",
     proof: Array.from(proof),
   };
-  await node.sendProofTx(proofTx);
+  return await node.sendProofTx(proofTx);
 };
 const sendBlobTx = async (identity: string, blobs: Blob[]) => {
   const blobTx: BlobTransaction = {
     identity: identity,
     blobs,
   };
-  await node.sendBlobTx(blobTx);
+  return await node.sendBlobTx(blobTx);
 };
 
 document.getElementById("submit")?.addEventListener("click", async () => {
@@ -147,13 +148,13 @@ document.getElementById("submit")?.addEventListener("click", async () => {
 
     show("logs", `Built account id hash: ${stored_hash}... ✅`);
 
-    await register(identity, stored_hash);
+    const tx_hash = await register(identity, stored_hash);
 
     show("logs", "Register transaction sent... ✅");
 
     show("logs", "Generating witness... ⏳");
     const { witness } = await noir.execute(
-      generateProverData(identity, hashed_password_bytes, stored_hash),
+      generateProverData(identity, hashed_password_bytes, stored_hash, tx_hash),
     );
     show("logs", "Generated witness... ✅");
     console.log("Witness: ", witness);

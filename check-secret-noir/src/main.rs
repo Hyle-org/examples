@@ -117,6 +117,9 @@ fn generate_prover_toml(
 fn generate_verification_key() -> Result<(), Box<dyn std::error::Error>> {
     info!("Generating verification key...");
 
+    let vk_dir = "./contract/target/vk";
+    std::fs::create_dir_all(vk_dir).expect("Failed to create directory");
+
     // Generate verification key
     info!("Generating verification key using bb...");
     let bb_vk_output = std::process::Command::new("bb")
@@ -193,6 +196,9 @@ fn execute_proof_generation(
     }
     info!("Nargo execution completed successfully");
 
+    let proof_dir = "./target/proof";
+    std::fs::create_dir_all(proof_dir).expect("Failed to create directory");
+
     // Generate proof using bb
     info!("Generating proof using bb...");
     let bb_prove_output = std::process::Command::new("bb")
@@ -257,7 +263,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Read the verification key
             info!("Reading verification key from file");
-            let vk = fs::read("./contract/target/vk")?;
+            let vk = fs::read("./contract/target/vk/vk")?;
             info!(
                 "Verification key read successfully, size: {} bytes",
                 vk.len()
@@ -345,7 +351,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Read the proof
             info!("Reading generated proof from file");
-            let proof = fs::read("./contract/target/proof")?;
+            let proof = fs::read("./contract/target/proof/proof")?;
             info!("Proof read successfully, size: {} bytes", proof.len());
             info!("Proof data: {:?}", proof);
 
