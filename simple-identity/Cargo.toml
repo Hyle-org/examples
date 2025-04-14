@@ -4,9 +4,8 @@ members = ["host", "contract", "methods"]
 default-members = ["host", "contract"]
 
 [workspace.dependencies]
-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", tag = "noir-0.1" }      # don't forget to update methods/guest/Cargo.toml 
-client-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-client-sdk", tag = "noir-0.1" }
-hyle = { git = "https://github.com/hyle-org/hyle", package = "hyle", tag = "noir-0.1" }
+sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-contract-sdk", tag = "v0.13.0-rc.1" } # don't forget to update methods/guest/Cargo.toml 
+client-sdk = { git = "https://github.com/hyle-org/hyle", package = "hyle-client-sdk", tag = "v0.13.0-rc.1" }
 
 # Always optimize; building and running the guest takes much longer without optimization.
 [profile.dev]
