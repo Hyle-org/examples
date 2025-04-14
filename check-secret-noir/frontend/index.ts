@@ -1,5 +1,9 @@
 import { NodeApiHttpClient } from "hyle";
-import { build_blob_transaction, build_proof_transaction } from "./lib";
+import {
+  build_blob_transaction,
+  build_proof_transaction,
+  register_contract,
+} from "./lib";
 
 const node = new NodeApiHttpClient("http://127.0.0.1:4321");
 
@@ -24,6 +28,8 @@ document.getElementById("submit")?.addEventListener("click", async () => {
       show("logs", "Identity and password are required.");
       return;
     }
+
+    await register_contract(node);
 
     show("logs", "Building blob transaction... ⏳");
     const blobTx = await build_blob_transaction(identity, password);
