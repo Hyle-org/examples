@@ -14,8 +14,9 @@ const show = (id: string, content: string): void => {
 document.getElementById("submit")?.addEventListener("click", async () => {
   try {
     // Prepare inputs
-    const identity = (document.getElementById("identity") as HTMLInputElement)
-      ?.value;
+    const identity =
+      (document.getElementById("identity") as HTMLInputElement)?.value +
+      ".check_secret";
     const password = (document.getElementById("password") as HTMLInputElement)
       ?.value;
 
