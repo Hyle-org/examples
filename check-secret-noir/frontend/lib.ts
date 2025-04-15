@@ -19,10 +19,10 @@ import {
  * @param password - The user's password string
  * @returns A Promise resolving to a BlobTransaction containing the hashed secret
  */
-export const build_blob_transaction = async (
+export const build_blob = async (
   identity: string,
   password: string,
-): Promise<BlobTransaction> => {
+): Promise<Blob> => {
   const hashed_password_bytes = await sha256(stringToBytes(password));
   let encoder = new TextEncoder();
   let id_prefix = encoder.encode(`${identity.padEnd(64, "0")}:`);
@@ -34,10 +34,7 @@ export const build_blob_transaction = async (
     data: Array.from(stored_hash),
   };
 
-  return {
-    identity: identity,
-    blobs: [secretBlob],
-  };
+  return secretBlob;
 };
 
 import defaultCircuit from "../contract/target/check_secret.json";
@@ -60,6 +57,8 @@ export const build_proof_transaction = async (
   identity: string,
   password: string,
   tx_hash: string,
+  blob_index: number,
+  tx_blob_count: number,
   circuit: CompiledCircuit = defaultCircuit as CompiledCircuit,
 ): Promise<ProofTransaction> => {
   const noir = new Noir(circuit);
@@ -72,7 +71,14 @@ export const build_proof_transaction = async (
   const stored_hash = await sha256(extended_id);
 
   const { witness } = await noir.execute(
-    generateProverData(identity, hashed_password_bytes, stored_hash, tx_hash),
+    generateProverData(
+      identity,
+      hashed_password_bytes,
+      stored_hash,
+      tx_hash,
+      blob_index,
+      tx_blob_count,
+    ),
   );
 
   const proof = await backend.generateProof(witness);
@@ -186,6 +192,8 @@ const generateProverData = (
   pwd: Uint8Array,
   stored_hash: Uint8Array,
   tx: string,
+  blob_index: number,
+  tx_blob_count: number,
 ): InputMap => {
   const version = 1;
   const initial_state = [0, 0, 0, 0];
@@ -196,14 +204,12 @@ const generateProverData = (
   const identity = id.padEnd(64, "0");
   const tx_hash = tx.padEnd(64, "0");
   const tx_hash_len = tx_hash.length;
-  const index = 0;
+  const index = blob_index;
   const blob_number = 1;
-  const blob_index = 0;
   const blob_contract_name_len = "check_secret".length;
   const blob_contract_name = "check_secret".padEnd(64, "0");
   const blob_len = 32;
   const blob: number[] = Array.from(stored_hash);
-  const tx_blob_count = 1;
   const success = 1;
   const password: number[] = Array.from(pwd);
   assert(password.length == 32, "Password length is not 32 bytes");

@@ -1,9 +1,5 @@
-import { NodeApiHttpClient } from "hyle";
-import {
-  build_blob_transaction,
-  build_proof_transaction,
-  register_contract,
-} from "./lib";
+import { BlobTransaction, NodeApiHttpClient } from "hyle";
+import { build_blob, build_proof_transaction, register_contract } from "./lib";
 
 const node = new NodeApiHttpClient("http://127.0.0.1:4321");
 
@@ -32,13 +28,23 @@ document.getElementById("submit")?.addEventListener("click", async () => {
     await register_contract(node);
 
     show("logs", "Building blob transaction... ⏳");
-    const blobTx = await build_blob_transaction(identity, password);
+    const blob = await build_blob(identity, password);
+    const blobTx: BlobTransaction = {
+      identity: identity,
+      blobs: [blob],
+    };
     const tx_hash = await node.sendBlobTx(blobTx);
     show("logs", "Register transaction sent... ✅");
 
     show("logs", "Building proof transaction... ⏳");
     const before = Date.now();
-    const proofTx = await build_proof_transaction(identity, password, tx_hash);
+    const proofTx = await build_proof_transaction(
+      identity,
+      password,
+      tx_hash,
+      0,
+      1,
+    );
     const after = Date.now();
     const time = after - before;
     show(
