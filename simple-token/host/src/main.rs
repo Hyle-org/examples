@@ -62,7 +62,7 @@ async fn main() {
         Commands::Register { supply } => {
             // Build initial state of contract
             let initial_state =
-                SimpleToken::new(supply, format!("faucet.{}", contract_name).into());
+                SimpleToken::new(supply, format!("faucet@{}", contract_name).into());
             println!("Initial state: {:?}", initial_state);
 
             // Send the transaction to register the contract

@@ -27,27 +27,26 @@ cargo run -- --contract-name id register-contract
 Now we have an identity contract called `id` we can use to declare a user. Let's declare one!
 
 ```bash
-cargo run -- --contract-name id register-identity bob.id pass
-cargo run -- --contract-name id register-identity alice.id pass
+cargo run -- --contract-name id register-identity bob@id pass
+cargo run -- --contract-name id register-identity alice@id pass
 ```
 
-We now have a user called *bob* on the contract `id`. We can refer to it with `bob.id`. His password is `pass`. Same for *alice*.
+We now have a user called _bob_ on the contract `id`. We can refer to it with `bob@id`. His password is `pass`. Same for _alice_.
 
 Let's verify it quickly with:
 
 ```bash
-cargo run -- --contract-name id verify-identity bob.id pass 0
+cargo run -- --contract-name id verify-identity bob@id pass 0
 ```
 
-`0` is the nonce. Every time we verify successfully *bob*'s identity, it increments. Now if we want to verify it again, we should use `1` as nonce.
-And for *alice*:
+`0` is the nonce. Every time we verify successfully _bob_'s identity, it increments. Now if we want to verify it again, we should use `1` as nonce.
+And for _alice_:
 
 ```bash
-cargo run -- --contract-name id verify-identity alice.id pass 0
+cargo run -- --contract-name id verify-identity alice@id pass 0
 ```
 
 ### Filling Bob's and Alice's bag
-
 
 Go to `./simple-token` folder and run:
 
@@ -59,30 +58,29 @@ On the node's logs, you will see:
 
 > 📝 Registering new contract simple_token
 
-You just registered a token contract named simple-token with an initial supply of 1000. Now let's transfer some tokens to our user *bob*.
+You just registered a token contract named simple-token with an initial supply of 1000. Now let's transfer some tokens to our user _bob_.
 
-To send `50` tokens to *bob* and `10` to *alice*
+To send `50` tokens to _bob_ and `10` to _alice_
 
 ```bash
-cargo run -- --contract-name simple-token transfer faucet.simple-token bob.id 50
-cargo run -- --contract-name simple-token transfer faucet.simple-token alice.id 10
+cargo run -- --contract-name simple-token transfer faucet@simple-token bob@id 50
+cargo run -- --contract-name simple-token transfer faucet@simple-token alice@id 10
 ```
 
 The node's log will show:
 
 > INFO hyle_verifiers: ✅ Risc0 proof verified.
->
 
 Check onchain balance:
 
 ```bash
-cargo run -- --contract-name simple-token balance faucet.simple-token
+cargo run -- --contract-name simple-token balance faucet@simple-token
 
-cargo run -- --contract-name simple-token balance bob.id
-cargo run -- --contract-name simple-token balance alice.id
+cargo run -- --contract-name simple-token balance bob@id
+cargo run -- --contract-name simple-token balance alice@id
 ```
 
-Now that *bob* has some tokens, let's buy him a ticket.
+Now that _bob_ has some tokens, let's buy him a ticket.
 
 Register the ticket app by going to `./ticket-app` folder and running:
 
@@ -92,30 +90,29 @@ cargo run -- --contract-name ticket-app register simple-token 15
 
 Our ticket app is called `ticket-app`, and sells a ticket for `15` simple-token.
 
-Let's buy a ticket for *bob*:
+Let's buy a ticket for _bob_:
 
 ```bash
-cargo run -- --contract-name ticket-app --user bob.id --pass pass --nonce 1 buy-ticket
+cargo run -- --contract-name ticket-app --user bob@id --pass pass --nonce 1 buy-ticket
 ```
 
-Check that *bob* has a ticket:
+Check that _bob_ has a ticket:
 
 ```bash
-cargo run -- --contract-name ticket-app --user bob.id has-ticket
+cargo run -- --contract-name ticket-app --user bob@id has-ticket
 ```
 
 You can also check Bob's balance and see he now has `35` tokens.
 
-Let's try with *alice*:
+Let's try with _alice_:
 
 ```bash
-cargo run -- --contract-name ticket-app --user alice.id buy-ticket
+cargo run -- --contract-name ticket-app --user alice@id buy-ticket
 ```
 
 Alice has insufficient balance, so the buy-ticket blob will have a failure proof and the node will print
 
-> INFO hyle::node_state ⛈️  Settled tx [...] has failed
-
+> INFO hyle::node_state ⛈️ Settled tx [...] has failed
 
 ### Executing the Project Locally in Development Mode
 
@@ -158,7 +155,7 @@ applications, which we think is a good starting point for your applications.
 ```text
 project_name
 ├── Cargo.toml
-├── contract 
+├── contract
 │   ├── Cargo.toml
 │   └── src
 │       └── lib.rs         <-- [Contract code goes here, common to host & guest]
@@ -178,6 +175,7 @@ project_name
 ```
 
 <!--[bonsai access]: https://bonsai.xyz/apply-->
+
 [cargo-risczero]: https://docs.rs/cargo-risczero
 [crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
 [dev-docs]: https://dev.risczero.com

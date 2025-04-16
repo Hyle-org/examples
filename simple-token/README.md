@@ -25,7 +25,7 @@ The expected output is `📝 Registering contract simple_token`.
 To transfer 2 tokens from `faucet` to `Bob`:
 
 ```bash
-cargo run -- transfer faucet.simple_token bob.simple_token 2
+cargo run -- transfer faucet@simple_token bob@simple_token 2
 ```
 
 This command will:
@@ -51,7 +51,7 @@ INFO hyle_verifiers: ✅ Risc0 proof verified.
 And on the following slot:
 
 ```bash
-INFO hyle::node_state: ✨ Settled tx [...] 
+INFO hyle::node_state: ✨ Settled tx [...]
 ```
 
 #### Check onchain balance
@@ -59,16 +59,16 @@ INFO hyle::node_state: ✨ Settled tx [...]
 Verify onchain balances:
 
 ```bash
-cargo run -- balance faucet.simple_token
-cargo run -- balance bob.simple_token
+cargo run -- balance faucet@simple_token
+cargo run -- balance bob@simple_token
 ```
 
 !!! note
-    In this example, we do not verify the identity of the person who initiates the transaction. We use `.simple_token` as a suffix for the "from" and "to" transfer fields: usually, we'd use the identity scheme as the suffix.
+In this example, we do not verify the identity of the person who initiates the transaction. We use `@simple_token` as a suffix for the "from" and "to" transfer fields: usually, we'd use the identity scheme as the suffix.
 
 ### Executing the Project Locally in Development Mode
 
-During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase. 
+During development, faster iteration upon code changes can be achieved by leveraging [dev-mode], we strongly suggest activating it during your early development phase.
 
 ```bash
 RISC0_DEV_MODE=1 cargo run
@@ -105,7 +105,7 @@ applications, which we think is a good starting point for your applications.
 ```text
 project_name
 ├── Cargo.toml
-├── contract 
+├── contract
 │   ├── Cargo.toml
 │   └── src
 │       └── lib.rs         <-- [Contract code goes here, common to host & guest]
@@ -125,6 +125,7 @@ project_name
 ```
 
 <!--[bonsai access]: https://bonsai.xyz/apply-->
+
 [cargo-risczero]: https://docs.rs/cargo-risczero
 [crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
 [dev-docs]: https://dev.risczero.com

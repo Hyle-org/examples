@@ -27,7 +27,7 @@ The expected output is `📝 Registering contract simple_identity`.
 To register an account with a username (`alice`) and password (`abc123`), execute:
 
 ```sh
-cargo run -- register-identity alice.simple_identity abc123
+cargo run -- register-identity alice@simple_identity abc123
 ```
 
 The node's logs will display:
@@ -41,7 +41,7 @@ INFO hyle_verifiers: ✅ Risc0 proof verified.
 To verify `alice`'s identity:
 
 ```bash
-cargo run -- verify-identity alice.simple_identity abc123 0
+cargo run -- verify-identity alice@simple_identity abc123 0
 ```
 
 This command will:
@@ -101,7 +101,7 @@ applications, which we think is a good starting point for your applications.
 ```text
 project_name
 ├── Cargo.toml
-├── contract 
+├── contract
 │   ├── Cargo.toml
 │   └── src
 │       └── lib.rs         <-- [Contract code goes here, common to host & guest]
@@ -121,6 +121,7 @@ project_name
 ```
 
 <!--[bonsai access]: https://bonsai.xyz/apply-->
+
 [cargo-risczero]: https://docs.rs/cargo-risczero
 [crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
 [dev-docs]: https://dev.risczero.com
