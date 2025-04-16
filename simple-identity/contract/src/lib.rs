@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 use sdk::RunResult;
 use sha2::{Digest, Sha256};
 
-impl sdk::HyleContract for IdentityContractState {
+impl sdk::ZkContract for IdentityContractState {
     /// Entry point of the contract's logic
-    fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
+    fn execute(&mut self, calldata: &sdk::Calldata) -> RunResult {
         // Parse contract inputs
-        let (action, ctx) = sdk::utils::parse_raw_contract_input::<IdentityAction>(contract_input)?;
+        let (action, ctx) = sdk::utils::parse_raw_calldata::<IdentityAction>(calldata)?;
 
         // Extract private information
-        let password = core::str::from_utf8(&contract_input.private_input).unwrap();
+        let password = core::str::from_utf8(&calldata.private_input).unwrap();
 
         // Execute the given action
         let res = match action {
