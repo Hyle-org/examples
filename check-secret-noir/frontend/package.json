@@ -3,10 +3,10 @@
   "description": "A library for checking secrets using Hyle and Noir.",
   "author": "Hyle",
   "license": "MIT",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "type": "module",
-  "main": "dist/lib.js",
-  "types": "dist/lib.d.ts",
+  "main": "dist/frontend/lib.js",
+  "types": "dist/frontend/lib.d.ts",
   "files": [
     "dist",
     "lib.ts"
