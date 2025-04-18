@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 sdk = { workspace = true }
 serde = { version = "1.0", default-features = false, features = [
-    "derive",
-    "alloc",
+  "derive",
+  "alloc",
 ] }
-borsh = { version = "1.5.5" }
+borsh = { version = "1.5.7" }

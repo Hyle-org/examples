@@ -60,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Register { supply } => {
             // Build initial state of contract
-            let initial_state = SimpleToken::new(supply, format!("faucet.{}", contract_name));
+            let initial_state = SimpleToken::new(supply, format!("faucet@{}", contract_name));
             println!("Initial state: {:?}", initial_state);
 
             let vk = serde_json::to_vec(&prover.vk).unwrap();

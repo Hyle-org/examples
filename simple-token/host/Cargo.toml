@@ -6,10 +6,11 @@ edition = "2021"
 [dependencies]
 sdk = { workspace = true }
 client-sdk = { workspace = true, features = ["rest", "risc0"] }
-contract = { path = "../contract", package = "contract"}
+contract = { path = "../contract", package = "contract" }
 
 methods = { path = "../methods" }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5.23", features = ["derive"] }
-borsh = "1.5.5"
+borsh = "1.5.7"
 tokio = { version = "1.42.0", features = ["full", "tracing"] }
+anyhow = "1.0.96"

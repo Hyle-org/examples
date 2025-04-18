@@ -33,8 +33,8 @@ cargo run --release -- register 1000
 
 ```sh
 cd script
-cargo run --release -- transfer faucet.simple_token bob.simple_token 100
+cargo run --release -- transfer faucet@simple_token bob@simple_token 100
 ```
 
-This will send the transactions to transfer 100 token from faucet to bob. The suffix `.simple_token` is for identity management.
+This will send the transactions to transfer 100 token from faucet to bob. The suffix `@simple_token` is for identity management.
 It is the default name of this contract when it was registered. See [hyle documentation](https://docs.hyle.eu/developers/general-doc/identity/) for further details.

@@ -8,26 +8,33 @@ This is a Risc0 example called simple_identity.
 
 - [Install Rust](https://www.rust-lang.org/tools/install) (you'll need `rustup` and Cargo).
 - For our example, [install RISC Zero](https://dev.risczero.com/api/zkvm/install).
-- [Start a single-node devnet](https://docs.hyle.eu/developers/quickstart/devnet/). We recommend using [dev-mode](https://dev.risczero.com/api/generating-proofs/dev-mode) with `-e RISC0_DEV_MODE=1` for faster iterations during development.
+- Run a local devnet node:
+
+Clone the [hyle](https://github.com/Hyle-org/hyle) repo, checkout the version you need, and run:
+
+```sh
+export RISC0_DEV_MODE=1
+cargo run -- --pg
+```
 
 ## Quickstart
 
-### Build and register the identity contract
+### Build and register the contract
 
-To build all methods and register the smart contract on the local node [from the source](https://github.com/Hyle-org/examples/blob/simple_erc20/simple-token/host/src/main.rs), run:
+To build and register the smart contract on the local node, run:
 
 ```bash
 cargo run -- register-contract
 ```
 
-The expected output is `📝 Registering contract simple_identity`.
+The expected output on the node is `📝 Registering contract counter`.
 
 ### Register an account / Sign up
 
 To register an account with a username (`alice`) and password (`abc123`), execute:
 
 ```sh
-cargo run -- register-identity alice.simple_identity abc123
+cargo run -- register-identity alice@simple_identity abc123
 ```
 
 The node's logs will display:
@@ -41,7 +48,7 @@ INFO hyle_verifiers: ✅ Risc0 proof verified.
 To verify `alice`'s identity:
 
 ```bash
-cargo run -- verify-identity alice.simple_identity abc123 0
+cargo run -- verify-identity alice@simple_identity abc123 0
 ```
 
 This command will:
@@ -68,6 +75,12 @@ During development, faster iteration upon code changes can be achieved by levera
 
 ```bash
 RISC0_DEV_MODE=1 cargo run
+```
+
+### Execute the contract & send a tx on-chain
+
+```sh
+RISC0_DEV_MODE=1 cargo run -- increment
 ```
 
 <!--### Running Proofs Remotely on Bonsai-->
@@ -101,7 +114,7 @@ applications, which we think is a good starting point for your applications.
 ```text
 project_name
 ├── Cargo.toml
-├── contract 
+├── contract
 │   ├── Cargo.toml
 │   └── src
 │       └── lib.rs         <-- [Contract code goes here, common to host & guest]
@@ -121,6 +134,7 @@ project_name
 ```
 
 <!--[bonsai access]: https://bonsai.xyz/apply-->
+
 [cargo-risczero]: https://docs.rs/cargo-risczero
 [crates]: https://github.com/risc0/risc0/blob/main/README.md#rust-binaries
 [dev-docs]: https://dev.risczero.com

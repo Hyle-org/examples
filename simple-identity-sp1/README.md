@@ -28,6 +28,7 @@ To build all methods and register the smart contract on the local node from the 
 cd script
 cargo run -- register-contract
 ```
+
 The expected output is `📝 Registering new contract simple_identity`.
 
 ### Register an account / Sign up
@@ -35,21 +36,24 @@ The expected output is `📝 Registering new contract simple_identity`.
 To register an account with a username (alice) and password (abc123), execute:
 
 ```sh
-cargo run -- register-identity alice.simple_identity abc123
+cargo run -- register-identity alice@simple_identity abc123
 ```
+
 The node's logs will display:
 
 ```sh
 INFO hyle_verifiers: ✅ SP1 proof verified.
 
 ```
+
 ### Verify identity / Login
 
 To verify alice's identity:
 
 ```sh
-cargo run -- verify-identity alice.simple_identity abc123 0
+cargo run -- verify-identity alice@simple_identity abc123 0
 ```
+
 This command will:
 
 1. Send a blob transaction to verify `alice`'s identity.
@@ -63,4 +67,3 @@ Upon reception of the proof, the node will:
 1. Update the contract's state.
 
 The node's logs will display:
-

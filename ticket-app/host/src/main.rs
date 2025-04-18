@@ -32,7 +32,7 @@ struct Cli {
     #[arg(long, default_value = "simple_ticket_app")]
     pub contract_name: String,
 
-    #[arg(long, default_value = "examples.simple_ticket_app")]
+    #[arg(long, default_value = "examples@simple_ticket_app")]
     pub user: String,
 
     #[arg(long, default_value = "pass")]
@@ -107,7 +107,7 @@ async fn main() {
                 nonce: cli.nonce.parse().unwrap(),
             };
 
-            let identity_contract_name = cli.user.rsplit_once(".").unwrap().1.to_string();
+            let identity_contract_name = cli.user.rsplit_once("@").unwrap().1.to_string();
 
             let blobs = vec![
                 sdk::Blob {
