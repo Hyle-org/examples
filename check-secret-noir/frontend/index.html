@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zero Knowledge Authentication</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .header h1 {
+        color: #2d3748;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .header p {
+        color: #718096;
+        font-size: 0.9rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+        font-weight: 500;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      button {
+        width: 100%;
+        padding: 0.75rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #5a67d8;
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      #logs {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 6px;
+        background: #f7fafc;
+        color: #4a5568;
+        font-size: 0.9rem;
+        max-height: 150px;
+        overflow-y: auto;
+      }
+
+      #logs:empty {
+        display: none;
+      }
+
+      .input-container {
+        position: relative;
+        width: 100%;
+      }
+
+      .input-container.with-suffix input {
+        padding-right: 95px; /* Make space for the suffix */
+      }
+
+      .input-container.with-suffix::after {
+        content: ".check_secret";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #a0aec0;
+        pointer-events: none;
+        font-size: 0.9rem;
+      }
+
+      .loader {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .description-container {
+        margin-top: 1rem;
+      }
+
+      .description-details {
+        margin-top: 0.5rem;
+        transition: max-height 0.3s ease-out;
+        overflow: hidden;
+        text-align: left;
+      }
+
+      .description-details p {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .toggle-button {
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        background: transparent;
+        border: 1px solid #667eea;
+        color: #667eea;
+      }
+
+      .toggle-button:hover {
+        background: rgba(102, 126, 234, 0.1);
+      }
+    </style>
+    <script type="module" src="/index.ts"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleButton = document.getElementById("toggle-details");
+        const detailsSection = document.querySelector(".description-details");
+
+        toggleButton.addEventListener("click", () => {
+          detailsSection.classList.toggle("hidden");
+          toggleButton.textContent = detailsSection.classList.contains("hidden")
+            ? "Show Details"
+            : "Hide Details";
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <script type="module" src="/index.ts"></script>
+    <div class="container">
+      <div class="header">
+        <h1>Secure Login</h1>
+        <p>Zero Knowledge Authentication</p>
+        <div class="description-container">
+          <div class="description-details hidden">
+            <p>
+              This is a demonstration project that shows how to implement a
+              secret checking system using Noir.
+            </p>
+
+            <p>
+              This project demonstrates zero-knowledge proof concepts for
+              password verification. The password is never directly exposed in
+              the verification process, enhancing security through cryptographic
+              proofs.
+            </p>
+
+            <p>
+              The password is passed as private input of a noir circuit. The
+              Noir proof is sent as a ProofTransaction to the Hyle network to be
+              verified and settle the BlobTransaction.
+            </p>
+          </div>
+          <button id="toggle-details" class="toggle-button">
+            Show Details
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="identity">Identity</label>
+        <div class="input-container with-suffix">
+          <input id="identity" type="text" placeholder="Enter your identity" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-container">
+          <input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+          />
+        </div>
+      </div>
+      <button id="submit">Login</button>
+      <div id="logs"></div>
+    </div>
+  </body>
+</html>
