@@ -1,7 +1,7 @@
 {
-  "name": "hyle-check-secret",
-  "description": "A library for checking secrets using Hyle and Noir.",
-  "author": "Hyle",
+  "name": "hyli-check-secret",
+  "description": "A library for checking secrets using Hyli and Noir.",
+  "author": "Hyli",
   "license": "MIT",
   "version": "0.3.2",
   "type": "module",
@@ -22,7 +22,7 @@
     "@aztec/bb.js": "0.82.2",
     "@noir-lang/noir_js": "1.0.0-beta.2",
     "@noir-lang/noir_wasm": "1.0.0-beta.2",
-    "hyle": "0.2.2"
+    "hyli": "^0.3.0"
   },
   "devDependencies": {
     "@types/bun": "^1.1.6",
