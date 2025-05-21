@@ -6,7 +6,7 @@ import {
   Blob,
   ProofTransaction,
   NodeApiHttpClient,
-} from "hyle";
+} from "hyli";
 
 /**
  * Builds a blob transaction containing a secret derived from an identity and password.
@@ -25,7 +25,7 @@ export const build_blob = async (
 ): Promise<Blob> => {
   const hashed_password_bytes = await sha256(stringToBytes(password));
   let encoder = new TextEncoder();
-  let id_prefix = encoder.encode(`${identity.padEnd(64, "0")}:`);
+  let id_prefix = encoder.encode(`${identity}:`);
   let extended_id = new Uint8Array([...id_prefix, ...hashed_password_bytes]);
   const stored_hash = await sha256(extended_id);
 
@@ -66,7 +66,7 @@ export const build_proof_transaction = async (
 
   const hashed_password_bytes = await sha256(stringToBytes(password));
   let encoder = new TextEncoder();
-  let id_prefix = encoder.encode(`${identity.padEnd(64, "0")}:`);
+  let id_prefix = encoder.encode(`${identity}:`);
   let extended_id = new Uint8Array([...id_prefix, ...hashed_password_bytes]);
   const stored_hash = await sha256(extended_id);
 
@@ -201,13 +201,14 @@ const generateProverData = (
   const next_state = [0, 0, 0, 0];
   const next_state_len = next_state.length;
   const identity_len = id.length;
-  const identity = id.padEnd(64, "0");
+  const identity = id.padEnd(256, "0");
   const tx_hash = tx.padEnd(64, "0");
   const tx_hash_len = tx_hash.length;
   const index = blob_index;
   const blob_number = 1;
   const blob_contract_name_len = "check_secret".length;
-  const blob_contract_name = "check_secret".padEnd(64, "0");
+  const blob_contract_name = "check_secret".padEnd(256, "0");
+  const blob_capacity = 32;
   const blob_len = 32;
   const blob: number[] = Array.from(stored_hash);
   const success = 1;
@@ -230,6 +231,7 @@ const generateProverData = (
     blob_index,
     blob_contract_name_len,
     blob_contract_name,
+    blob_capacity,
     blob_len,
     blob,
     tx_blob_count,

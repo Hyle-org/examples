@@ -1,4 +1,4 @@
-import { BlobTransaction, NodeApiHttpClient } from "hyle";
+import { BlobTransaction, NodeApiHttpClient } from "hyli";
 import { build_blob, build_proof_transaction, register_contract } from "./lib";
 
 const node = new NodeApiHttpClient("http://127.0.0.1:4321");
@@ -16,7 +16,7 @@ document.getElementById("submit")?.addEventListener("click", async () => {
     // Prepare inputs
     const identity =
       (document.getElementById("identity") as HTMLInputElement)?.value +
-      ".check_secret";
+      "@check_secret";
     const password = (document.getElementById("password") as HTMLInputElement)
       ?.value;
 

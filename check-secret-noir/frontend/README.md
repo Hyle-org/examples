@@ -1,6 +1,6 @@
 # Check Secret Noir Library
 
-A TypeScript library for securely handling secret verification using zero-knowledge proofs with Noir circuits to be settled on Hyle network.
+A TypeScript library for securely handling secret verification using zero-knowledge proofs with Noir circuits to be settled on Hyli network.
 
 ## Main Functions
 
@@ -14,7 +14,7 @@ Creates a blob transaction containing a securely hashed secret. This function:
 
 Example usage:
 ```typescript
-import { NodeApiHttpClient } from "hyle";
+import { NodeApiHttpClient } from "hyli";
 
 const node = new NodeApiHttpClient("http://127.0.0.1:4321");
 const blobTx = await build_blob_transaction("user123", "myPassword");
@@ -55,7 +55,7 @@ yarn add check-secret-noir
 - @noir-lang/noir_js
 - @aztec/bb.js
 - @noir-lang/types
-- hyle
+- hyli
 
 ## Security
 
