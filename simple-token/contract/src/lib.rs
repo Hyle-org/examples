@@ -18,8 +18,7 @@ impl sdk::HyleContract for SimpleToken {
     /// Entry point of the contract's logic
     fn execute(&mut self, contract_input: &sdk::ContractInput) -> RunResult {
         // Parse contract inputs
-        let (action, ctx) =
-            sdk::utils::parse_raw_contract_input::<SimpleTokenAction>(contract_input)?;
+        let (action, ctx) = sdk::utils::parse_raw_contract_input::<SimpleTokenAction>(contract_input)?;
 
         // Execute the given action
         let res = match action {
@@ -103,5 +102,23 @@ impl From<sdk::StateCommitment> for SimpleToken {
         borsh::from_slice(&state.0)
             .map_err(|_| "Could not decode hyllar state".to_string())
             .unwrap()
+    }
+}
+
+impl sdk::ContractAction for SimpleTokenAction {
+    fn as_blob(
+        &self,
+        contract_name: sdk::ContractName,
+        caller: Option<sdk::BlobIndex>,
+        callees: Option<Vec<sdk::BlobIndex>>,
+    ) -> sdk::Blob {
+        sdk::Blob {
+            contract_name,
+            data: sdk::BlobData::from(sdk::StructuredBlobData {
+                caller,
+                callees,
+                parameters: self.clone(),
+            }),
+        }
     }
 }
