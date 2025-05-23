@@ -16,5 +16,10 @@ export default defineConfig({
         sourcemap: true,
         minify: true,
     },
+    resolve: {
+        alias: {
+            "@": "./",
+        },
+    },
     //plugins: [analyzer()],
 });
