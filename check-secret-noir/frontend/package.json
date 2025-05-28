@@ -3,13 +3,19 @@
   "description": "A library for checking secrets using Hyli and Noir.",
   "author": "Hyli",
   "license": "MIT",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "type": "module",
   "main": "dist/check-secret.cjs.js",
   "module": "dist/check-secret.es.js",
   "exports": {
-    "import": "./dist/check-secret.es.js",
-    "require": "./dist/check-secret.cjs.js"
+    "import": {
+      "types": "./dist/frontend/lib.d.ts",
+      "default": "./dist/check-secret.es.js"
+    },
+    "require": {
+      "types": "./dist/frontend/lib.d.ts",
+      "default": "./dist/check-secret.cjs.js"
+    }
   },
   "types": "dist/frontend/lib.d.ts",
   "files": [
